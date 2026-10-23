@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { addDoc, updateDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { addDoc, updateDoc, setDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { setupDatePickers } from "./date-picker.js?v=4";
@@ -13,6 +13,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
 const state = { user: null, member: null, isAdmin: false, members: [], runs: [], unsubscribe: [] };
+state.payments = new Map();
+state.paymentsReady = false;
+state.paymentsFailed = false;
+const pendingPayments = new Map();
 const isAdminLogin = /\/admin(?:\/index\.html)?\/?$/.test(location.pathname);
 $("memberLoginPanel").classList.toggle("hidden", isAdminLogin);
 $("adminLoginPanel").classList.toggle("hidden", !isAdminLogin);
@@ -31,6 +35,40 @@ const memberPhoto = (member) => member.nick ? `./assets/members/${encodeURICompo
 function runsFor(memberId, month) {
   return state.runs.filter((run) => run.memberId === memberId && dateInMonth(run.date, month));
 }
+
+const paymentKey = (memberId, month) => `${month}_${memberId}`;
+function renderPayment(member, month) {
+  const key = paymentKey(member.id, month);
+  const pending = pendingPayments.has(key);
+  const paid = pending ? pendingPayments.get(key) : state.payments.get(key)?.paid === true;
+  const ready = state.paymentsReady && !state.paymentsFailed;
+  const text = pending ? "Ukladám…" : !ready ? (state.paymentsFailed ? "Stav nedostupný" : "Načítavam platbu…") : paid ? "Zaplatené" : "Nezaplatené";
+  if (!state.isAdmin) return `<div class="payment-status ${ready ? paid ? "paid" : "unpaid" : "payment-unknown"}"><span class="payment-dot" aria-hidden="true"></span>${text}</div>`;
+  return `<label class="payment-control ${ready && paid ? "paid" : "unpaid"}"><input type="checkbox" class="payment-checkbox" data-member-id="${escapeHtml(member.id)}" data-month="${month}" ${paid ? "checked" : ""} ${!ready || pending ? "disabled" : ""} aria-label="Zaplatené: ${escapeHtml(member.name)}, ${month}"><span>${text}</span></label>`;
+}
+
+document.addEventListener("change", async (event) => {
+  const checkbox = event.target.closest(".payment-checkbox");
+  if (!checkbox || !state.isAdmin || !state.paymentsReady || state.paymentsFailed) return;
+  const memberId = checkbox.dataset.memberId;
+  const month = checkbox.dataset.month;
+  if (!state.members.some((member) => member.id === memberId) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return;
+  const key = paymentKey(memberId, month);
+  if (pendingPayments.has(key)) return;
+  const userId = state.user.uid;
+  pendingPayments.set(key, checkbox.checked);
+  $("paymentError").textContent = "";
+  render();
+  try {
+    await setDoc(doc(db, "payments", key), { memberId, month, paid: checkbox.checked, updatedBy: userId, updatedAt: serverTimestamp() });
+  } catch (error) {
+    if (state.user?.uid === userId) $("paymentError").textContent = "Platbu sa nepodarilo uložiť. Skús to znova.";
+    console.error(error);
+  } finally {
+    pendingPayments.delete(key);
+    if (state.user?.uid === userId) render();
+  }
+});
 
 function render() {
   const month = monthValue();
@@ -63,7 +101,7 @@ function render() {
   if (selectableMembers.some((member) => member.id === previousMember)) $("memberSelect").value = previousMember;
   $("memberSelect").disabled = !state.isAdmin || !!editingRunId;
   $("weeklyTable").innerHTML = rows.length ? `<table><thead><tr><th>Člen</th>${weeks.map((week) => `<th>${week.label}<br><small>min. ${week.requiredRuns} ${week.requiredRuns === 1 ? "beh" : "behy"}</small></th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.member.name)}</td>${row.statuses.map((week) => `<td class="${week.count >= week.requiredRuns ? "ok" : "warning"}">${week.count}/${week.requiredRuns}</td>`).join("")}</tr>`).join("")}</tbody></table>` : "<p class=\"muted\">Najprv pridajte členov.</p>";
-  $("monthlyTable").innerHTML = rows.length ? `<div class="member-summary-grid">${rows.map((row) => `<article class="member-summary"><div class="member-summary-head"><div><strong>${escapeHtml(row.member.name)}</strong><span class="member-nick">${row.runs.length} ${row.runs.length === 1 ? "beh" : "behov"} · ${row.runs.reduce((sum, run) => sum + Number(run.distance || 0), 0).toFixed(1)} km</span></div><strong class="member-total">${money(row.total)}</strong></div><div class="member-metrics"><span><small>Príplatok</small><b>${money(row.extra)}</b></span><span><small>Základ</small><b>10,00 €</b></span></div><div class="run-list">${row.runs.length ? row.runs.sort((a, b) => b.date.localeCompare(a.date)).map((run) => `<div class="run-item"><span>${run.date}</span><b>${run.distance || "—"} km</b><span class="run-actions">${editable(run) ? `<button type="button" class="button secondary edit-run" data-id="${escapeHtml(run.id)}" aria-label="Upravi&#357; beh z ${run.date}">Upravi&#357;</button>` : ""}${editable(run) ? `<button type="button" class="button danger delete-run" data-id="${escapeHtml(run.id)}" title="Zmazať beh" aria-label="Zmazať beh z ${run.date}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>` : ""}</span></div>`).join("") : "<span class=\"muted\">V tomto mesiaci zatiaľ nemá žiadny beh.</span>"}</div></article>`).join("")}</div>` : "<p class=\"muted\">Žiadne záznamy.</p>";
+  $("monthlyTable").innerHTML = rows.length ? `<div class="member-summary-grid">${rows.map((row) => `<article class="member-summary"><div class="member-summary-head"><div><strong>${escapeHtml(row.member.name)}</strong><span class="member-nick">${row.runs.length} ${row.runs.length === 1 ? "beh" : "behov"} · ${row.runs.reduce((sum, run) => sum + Number(run.distance || 0), 0).toFixed(1)} km</span></div><strong class="member-total">${money(row.total)}</strong></div><div class="member-metrics"><span><small>Príplatok</small><b>${money(row.extra)}</b></span><span><small>Základ</small><b>10,00 €</b></span></div>${renderPayment(row.member, month)}<div class="run-list">${row.runs.length ? row.runs.sort((a, b) => b.date.localeCompare(a.date)).map((run) => `<div class="run-item"><span>${run.date}</span><b>${run.distance || "—"} km</b><span class="run-actions">${editable(run) ? `<button type="button" class="button secondary edit-run" data-id="${escapeHtml(run.id)}" aria-label="Upravi&#357; beh z ${run.date}">Upravi&#357;</button>` : ""}${editable(run) ? `<button type="button" class="button danger delete-run" data-id="${escapeHtml(run.id)}" title="Zmazať beh" aria-label="Zmazať beh z ${run.date}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>` : ""}</span></div>`).join("") : "<span class=\"muted\">V tomto mesiaci zatiaľ nemá žiadny beh.</span>"}</div></article>`).join("")}</div>` : "<p class=\"muted\">Žiadne záznamy.</p>";
   $("membersList").innerHTML = state.members.map((member) => `<div class="member-row"><span><strong>${escapeHtml(member.name)}</strong><small class="member-nick">@${escapeHtml(member.nick || "bez nicku")}</small></span><button class="button danger delete-member" data-id="${member.id}" aria-label="Odstrániť člena ${escapeHtml(member.name)}">Odstrániť</button></div>`).join("");
 }
 
@@ -138,6 +176,18 @@ async function loadData() {
   state.unsubscribe.push(onSnapshot(collection(db, "runs"), (snapshot) => {
     state.runs = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })); render();
   }));
+  state.unsubscribe.push(onSnapshot(collection(db, "payments"), (snapshot) => {
+    state.payments = new Map(snapshot.docs.map((item) => [item.id, item.data()]));
+    state.paymentsReady = true;
+    state.paymentsFailed = false;
+    render();
+  }, (error) => {
+    state.paymentsReady = false;
+    state.paymentsFailed = true;
+    $("paymentError").textContent = "Stav platieb sa nepodarilo načítať.";
+    render();
+    console.error(error);
+  }));
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -148,6 +198,11 @@ onAuthStateChanged(auth, async (user) => {
     state.isAdmin = false;
     state.members = [];
     state.runs = [];
+    state.payments.clear();
+    state.paymentsReady = false;
+    state.paymentsFailed = false;
+    pendingPayments.clear();
+    $("paymentError").textContent = "";
     $("membersCard").classList.add("hidden");
     $("loginView").classList.remove("hidden");
     $("appView").classList.add("hidden");

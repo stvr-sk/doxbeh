@@ -21,6 +21,21 @@ service cloud.firestore {
       );
       allow delete: if admin() || (signedIn() && resource.data.createdBy == request.auth.uid);
     }
+    match /payments/{id} {
+      allow read: if signedIn();
+      allow create, update: if admin()
+        && request.resource.data.keys().hasAll(['memberId', 'month', 'paid', 'updatedBy', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['memberId', 'month', 'paid', 'updatedBy', 'updatedAt'])
+        && request.resource.data.memberId is string
+        && request.resource.data.month is string
+        && request.resource.data.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')
+        && id == request.resource.data.month + '_' + request.resource.data.memberId
+        && exists(/databases/$(database)/documents/members/$(request.resource.data.memberId))
+        && request.resource.data.paid is bool
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
     match /admins/{id} { allow read: if signedIn() && request.auth.uid == id; }
     match /settings/{id} {
       allow read: if signedIn() && id == "access";

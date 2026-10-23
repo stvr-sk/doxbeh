@@ -12,6 +12,7 @@ Jednoduchá webová aplikácia na evidenciu behov, porovnávanie kilometrov a sl
 - **Týždenný cieľ** — počet splnených behov a ukazovateľ pokroku pre aktuálny týždeň.
 - **História kilometrov** — rozbaľovací graf posledných 12 mesiacov končiacich vybraným mesiacom.
 - **Príspevky** — automatický výpočet základného príspevku a príplatkov za nesplnené týždenné ciele.
+- **Stav platieb** — admin označí príspevok ako zaplatený alebo nezaplatený pre konkrétneho člena a mesiac. Stav vidia aj používatelia.
 
 Tmavý vzhľad s oranžovými akcentmi, vlastný kalendár a rozloženie prispôsobené mobilu aj počítaču. Hlavnú časť stránky tvoria pridanie behu, porovnávací graf a prehľad záznamov; doplnkové detaily zostávajú zbalené.
 
