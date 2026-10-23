@@ -9,6 +9,7 @@ Jednoduchá webová aplikácia na evidenciu behov, porovnávanie kilometrov a sl
 - **Záznamy behov** — pridanie dátumu a vzdialenosti, úprava záznamu a odstránenie s potvrdením.
 - **Mesačné porovnanie** — graf členov zoradený od najväčšieho počtu kilometrov.
 - **Osobný prehľad** — kilometre, počet behov, priemerná dĺžka a najdlhší beh vo vybranom mesiaci.
+- **Mesačný a týždenný prehľad** — prepínanie osobných štatistík a spoločný mesačný pool so základom 10 € za každého člena a pokutami za ukončené týždne.
 - **Týždenný cieľ** — počet splnených behov a ukazovateľ pokroku pre aktuálny týždeň.
 - **História kilometrov** — rozbaľovací graf posledných 12 mesiacov končiacich vybraným mesiacom.
 - **Príspevky** — automatický výpočet základného príspevku a príplatkov za nesplnené týždenné ciele.
@@ -25,6 +26,8 @@ Tmavý vzhľad s oranžovými akcentmi, vlastný kalendár a rozloženie prispô
 ## Týždenné ciele a príspevky
 
 Základný mesačný príspevok je **10 €**. Za každý chýbajúci povinný beh sa pripočítava **2,50 €**.
+
+Pokuty sa započítajú až po ukončení týždňa, pri poslednom čiastočnom týždni po skončení mesiaca. Aktuálny týždeň ešte nezvyšuje príspevok. Spoločný pool je súčet základných príspevkov všetkých členov a doteraz započítaných pokút; označenie platby ako zaplatenej jeho výšku nemení. Dodatočná oprava behu prepočíta aj príslušnú pokutu.
 
 | Počet dní týždňa vo vybranom mesiaci | Povinné behy |
 | --- | ---: |

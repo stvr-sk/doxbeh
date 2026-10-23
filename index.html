@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#141916" />
     <title>Doxbeh</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=8" />
+    <link rel="stylesheet" href="./styles.css?v=9" />
   </head>
   <body>
     <main class="shell">
@@ -54,9 +54,9 @@
         </div>
 
         <section class="personal-overview" aria-label="Osobný prehľad">
-          <div class="personal-heading"><span class="eyebrow">Tvoj prehľad</span><label id="personalMemberLabel" class="hidden">Člen <select id="personalMemberSelect"></select></label></div>
-          <div id="summaryGrid" class="personal-strip"></div>
-          <details class="history-details"><summary>História kilometrov <span class="muted">Posledných 12 mesiacov</span></summary><div id="historyChart" class="history-chart"></div><p id="historyDescription" class="muted"></p></details>
+          <div class="personal-heading"><div class="overview-tabs" role="group" aria-label="Obdobie prehľadu"><button id="monthlyOverviewButton" type="button" aria-pressed="true" aria-controls="monthlyOverview">Mesačný prehľad</button><button id="weeklyOverviewButton" type="button" aria-pressed="false" aria-controls="weeklyOverview">Týždenný prehľad</button></div><label id="personalMemberLabel" class="hidden">Člen <select id="personalMemberSelect"></select></label></div>
+          <div id="monthlyOverview"><div class="monthly-overview-grid"><div id="summaryGrid" class="personal-strip monthly-stats"></div><div id="monthlyPool" class="monthly-pool" aria-live="polite"></div></div><details class="history-details"><summary>História kilometrov <span class="muted">Posledných 12 mesiacov</span></summary><div id="historyChart" class="history-chart"></div><p id="historyDescription" class="muted"></p></details></div>
+          <div id="weeklyOverview" class="personal-strip" hidden></div>
         </section>
 
         <div class="primary-grid">
@@ -129,7 +129,7 @@
         </div>
       </form>
     </dialog>
-    <script type="module" src="./app.js?v=11"></script>
+    <script type="module" src="./app.js?v=13"></script>
   </body>
 </html>
 

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import vm from "node:vm";
 import assert from "node:assert/strict";
-import { personalInsights, canEditRun, localDate } from "../insights.js";
+import { personalInsights, monthContributions, canEditRun, localDate } from "../insights.js";
 import { monthWeeks } from "../weeks.js";
 
 const elements = new Map();
@@ -18,11 +18,11 @@ const element = (id) => {
 let failWrite = false;
 const context = {
   console: { error() {} }, Date, Number, String, Math, Array, Map, Event,
-  location: { pathname: "/" }, setTimeout() {},
+  location: { pathname: "/" }, setTimeout() {}, setInterval() {},
   document: { getElementById: element, addEventListener(type, fn) { (events[type] ??= []).push(fn); } },
   firebaseConfig: {}, initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
   setupDatePickers() {}, onAuthStateChanged() {},
-  personalInsights, canEditRun, localDate, monthWeeks,
+  personalInsights, monthContributions, canEditRun, localDate, monthWeeks,
   doc: (_, collection, id) => ({ collection, id }), serverTimestamp: () => "server-time",
   async setDoc(ref, data) {
     if (failWrite) throw new Error("offline");
