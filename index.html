@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#141916" />
+    <title>Doxbeh</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./styles.css?v=7" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Doxbeh – domov"><span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="runner-logo icon icon-tabler icons-tabler-outline icon-tabler-run-sprint" aria-hidden="true" focusable="false"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.007 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M7 17l5 1l.75 -1.5" /><path d="M18 21v-4l-4 -3l1 -6" /><path d="M10 12v-3l5 -1l3 3l3 1" /><path d="M10 5h-4" /><path d="M6 10h-4" /></svg></span><span class="brand-name">doxbeh<span class="brand-dot">.</span></span></a>
+        <button id="logoutButton" class="button secondary hidden">Odhlásiť ↗</button>
+      </header>
+
+      <section id="loadingView" class="card status-card">Načítavam aplikáciu…</section>
+
+      <section id="loginView" class="auth-card hidden">
+        <div class="auth-story">
+          <h1>Stačí len<br><em>začať.</em></h1>
+          <div class="track-art" aria-hidden="true"><svg class="track-illustration" viewBox="0 0 560 400" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-24 280 200)" stroke="#647e65" stroke-width="2"><rect x="40" y="100" width="480" height="200" rx="100"/><rect x="56" y="116" width="448" height="168" rx="84"/><rect x="72" y="132" width="416" height="136" rx="68"/><rect x="88" y="148" width="384" height="104" rx="52"/></g><path d="m306 205 40-60m-25 5 25-5 5 25" stroke="#ef865e" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter"/></svg><span class="track-number">01 &#8212; &#8734;</span></div>
+        </div>
+        <div class="auth-content">
+        <div id="memberLoginPanel">
+          <h2>Vitaj späť.</h2>
+          <p class="muted">Prihlás sa a zaznamenaj svoj beh.</p>
+          <form id="memberLoginForm">
+            <label>Nick<input id="nickInput" placeholder="meno a priezvisko v tvare men.pri" autocomplete="username" required maxlength="30" /></label>
+            <label>PIN<input id="memberPinInput" type="password" inputmode="numeric" autocomplete="current-password" minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="6 číslic" required /></label>
+            <button class="button primary" type="submit">Poďme na to <span aria-hidden="true">↗</span></button>
+            <p id="memberLoginError" class="error"></p>
+          </form>
+        </div>
+        <div id="adminLoginPanel" class="hidden">
+          <h2>Prihlásenie admina</h2>
+          <p class="muted">Admin používa e-mail a heslo.</p>
+          <form id="loginForm">
+          <label>E-mail<input id="emailInput" type="email" autocomplete="username" required /></label>
+          <label>Heslo<input id="passwordInput" type="password" autocomplete="current-password" required /></label>
+          <button class="button primary" type="submit">Prihlásiť sa</button>
+          <p id="loginError" class="error"></p>
+          </form>
+        </div>
+        </div>
+      </section>
+
+      <section id="appView" class="hidden">
+        <div class="dashboard-intro"><div><h1>Stačí len <em>začať.</em></h1></div><a class="button primary" href="#runForm">+ Zaznamenať beh</a></div>
+        <div class="toolbar">
+          <label>Mesiac<input id="monthInput" type="month" /></label>
+          <span id="userLabel" class="user-badge muted"></span>
+        </div>
+
+        <section class="personal-overview" aria-label="Osobný prehľad">
+          <div class="personal-heading"><span class="eyebrow">Tvoj prehľad</span><label id="personalMemberLabel" class="hidden">Člen <select id="personalMemberSelect"></select></label></div>
+          <div id="summaryGrid" class="personal-strip"></div>
+          <details class="history-details"><summary>História kilometrov <span class="muted">Posledných 12 mesiacov</span></summary><div id="historyChart" class="history-chart"></div><p id="historyDescription" class="muted"></p></details>
+        </section>
+
+        <div class="primary-grid">
+          <section id="runCard" class="card">
+            <div class="section-heading">
+              <div><p id="runEyebrow" class="eyebrow">Nový záznam</p><h2 id="runFormTitle">Pridať beh</h2></div><button id="cancelEditButton" type="button" class="button secondary hidden">Zrušiť úpravu</button>
+            </div>
+            <form id="runForm" class="run-form">
+              <label>Člen<select id="memberSelect" required></select></label>
+              <label>Dátum<input id="runDateInput" type="date" required /></label>
+              <label>Dĺžka (km)<input id="runDistanceInput" type="number" min="0.1" max="500" step="0.1" placeholder="napr. 7,5" required /></label>
+              <button id="saveRunButton" class="button primary" type="submit">Pridať beh</button>
+            </form>
+            <p id="runMessage" class="success" role="status"></p>
+            <p id="runError" class="error" role="alert"></p>
+          </section>
+
+        <section class="card chart-card">
+          <div class="section-heading">
+            <div><p class="eyebrow">Porovnanie výkonu</p><h2>Kilometre za mesiac</h2></div>
+            <span id="chartMonthLabel" class="pill"></span>
+          </div>
+          <div id="distanceChart" class="distance-chart"></div>
+        </section>
+
+        </div>
+
+        <div class="layout">
+          <section class="card wide">
+            <div class="section-heading">
+              <div><p class="eyebrow">Záznamy a príspevky</p><h2>Prehľad behov</h2></div>
+              <span class="pill">Základ 10 €</span>
+            </div>
+            <p id="recordsError" class="error" role="alert"></p>
+            <div id="monthlyTable" class="table-wrap"></div>
+          </section>
+
+          <details class="card weekly-details">
+            <summary>Týždenné plnenie a príspevky</summary>
+            <div class="section-heading">
+              <div><p class="eyebrow">Kontrola pravidiel</p><h2>Týždne v mesiaci</h2></div>
+            </div>
+            <div id="weeklyTable" class="table-wrap"></div>
+          </details>
+
+          <section id="membersCard" class="card wide hidden">
+            <div class="section-heading">
+              <div><p class="eyebrow">Administrácia</p><h2>Členovia</h2></div>
+            </div>
+            <form id="memberForm" class="inline-form">
+              <label>Meno člena<input id="memberNameInput" required maxlength="80" /></label>
+              <label>Nick<input id="memberNickInput" required maxlength="30" placeholder="napr. pat.pis" /></label>
+              <button class="button primary" type="submit">Pridať člena</button>
+            </form>
+            <p id="memberError" class="error"></p>
+            <div id="membersList" class="member-list"></div>
+          </section>
+        </div>
+      </section>
+      <footer class="site-footer"><span>doxbeh.</span></footer>
+    </main>
+    <dialog id="confirmDialog" class="confirm-dialog">
+      <form method="dialog">
+        <h2 id="confirmTitle">Potvrdiť akciu</h2>
+        <p id="confirmMessage" class="muted"></p>
+        <div class="dialog-actions">
+          <button value="cancel" class="button secondary">Zrušiť</button>
+          <button id="confirmAction" value="confirm" class="button danger">Odstrániť</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="./app.js?v=10"></script>
+  </body>
+</html>
+

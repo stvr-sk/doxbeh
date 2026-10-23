@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    match /members/{id} {
+      allow read: if signedIn();
+      allow create, update, delete: if admin();
+    }
+    match /runs/{id} {
+      allow read, create: if signedIn();
+      allow update: if admin() || (
+        signedIn()
+        && resource.data.createdBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['date', 'distance'])
+        && request.resource.data.date is string
+        && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.distance is number
+        && request.resource.data.distance >= 0.1
+        && request.resource.data.distance <= 500
+      );
+      allow delete: if admin() || (signedIn() && resource.data.createdBy == request.auth.uid);
+    }
+    match /admins/{id} { allow read: if signedIn() && request.auth.uid == id; }
+    match /settings/{id} {
+      allow read: if signedIn() && id == "access";
+      allow write: if admin();
+    }
+  }
+}

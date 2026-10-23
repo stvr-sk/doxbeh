@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mock avatar Patrik Pišta">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#57d8c8"/>
+      <stop offset="1" stop-color="#67a9ff"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#193b65"/>
+      <stop offset="1" stop-color="#10233e"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#bg)"/>
+  <circle cx="100" cy="82" r="39" fill="#f1b28d"/>
+  <path d="M61 78c2-39 76-52 82 2-16-14-32-20-51-15-10 3-19 8-31 13Z" fill="#17243b"/>
+  <path d="M46 190c5-51 30-72 54-72s49 21 54 72Z" fill="url(#shirt)"/>
+  <circle cx="85" cy="83" r="4" fill="#17243b"/>
+  <circle cx="116" cy="83" r="4" fill="#17243b"/>
+  <path d="M88 103c8 6 16 6 24 0" fill="none" stroke="#a95e59" stroke-linecap="round" stroke-width="4"/>
+  <path d="M29 42 45 22M171 42l-16-20" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="5" opacity=".45"/>
+</svg>
