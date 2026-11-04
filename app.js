@@ -10,12 +10,19 @@ import { monthWeeks } from "./weeks.js";
 
 import { renderRunOverview } from "./run-overview.js?v=3";
 
+import { installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable } from "./payment-ledger.js?v=2";
+
+import { renderWeeklyOverview } from "./weekly-overview.js?v=1";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
 const state = { user: null, member: null, isAdmin: false, members: [], runs: [], unsubscribe: [] };
 state.payments = new Map();
+state.paymentItems = new Map();
+state.paymentItemsReady = false;
+state.paymentItemsFailed = false;
 state.paymentsReady = false;
 state.paymentsFailed = false;
 const pendingPayments = new Map();
@@ -24,6 +31,7 @@ $("memberLoginPanel").classList.toggle("hidden", isAdminLogin);
 $("adminLoginPanel").classList.toggle("hidden", !isAdminLogin);
 if (isAdminLogin) document.title = "Admin · Doxbeh";
 const openedRunMembers = new Set();
+const selectedWeeks = new Map();
 let editingRunId = null;
 let savingRun = false;
 const km = (value) => Number(value).toLocaleString("sk", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -39,31 +47,34 @@ function runsFor(memberId, month) {
   return state.runs.filter((run) => run.memberId === memberId && dateInMonth(run.date, month));
 }
 
-const paymentKey = (memberId, month) => `${month}_${memberId}`;
+const paymentsAvailable = () => state.paymentsReady && !state.paymentsFailed && state.paymentItemsReady && !state.paymentItemsFailed;
 function renderPayment(member, month) {
-  const key = paymentKey(member.id, month);
-  const pending = pendingPayments.has(key);
-  const paid = pending ? pendingPayments.get(key) : state.payments.get(key)?.paid === true;
-  const ready = state.paymentsReady && !state.paymentsFailed;
-  const text = pending ? "Ukladám…" : !ready ? (state.paymentsFailed ? "Stav nedostupný" : "Načítavam platbu…") : paid ? "Zaplatené" : "Nezaplatené";
-  if (!state.isAdmin) return `<div class="payment-status ${ready ? paid ? "paid" : "unpaid" : "payment-unknown"}"><span class="payment-dot" aria-hidden="true"></span>${text}</div>`;
-  return `<label class="payment-control ${ready && paid ? "paid" : "unpaid"}"><input type="checkbox" class="payment-checkbox" data-member-id="${escapeHtml(member.id)}" data-month="${month}" ${paid ? "checked" : ""} ${!ready || pending ? "disabled" : ""} aria-label="Zaplatené: ${escapeHtml(member.name)}, ${month}"><span>${text}</span></label>`;
+  if (!paymentsAvailable()) return '<div class="payment-status payment-unknown">Stav platieb nedostupn&#253;</div>';
+  const row = monthContributions([member], state.runs, month).rows[0];
+  const balance = memberPaymentBalance(row,month,state.paymentItems,state.payments.get(`${month}_${member.id}`),pendingPayments);
+  const text = balance.remaining === 0 ? 'Zaplaten&#233;' : balance.paid > 0 ? `Zost&#225;va ${money(balance.remaining)}` : 'Nezaplaten&#233;';
+  return `<div class="payment-status ${balance.remaining === 0 ? 'paid' : 'unpaid'}"><span class="payment-dot" aria-hidden="true"></span>${text}</div>`;
 }
 
 document.addEventListener("change", async (event) => {
-  const checkbox = event.target.closest(".payment-checkbox");
-  if (!checkbox || !state.isAdmin || !state.paymentsReady || state.paymentsFailed) return;
-  const memberId = checkbox.dataset.memberId;
-  const month = checkbox.dataset.month;
-  if (!state.members.some((member) => member.id === memberId) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return;
-  const key = paymentKey(memberId, month);
+  const checkbox = event.target.closest(".installment-checkbox");
+  if (!checkbox || !state.isAdmin || !paymentsAvailable()) return;
+  const {memberId, month, itemId} = checkbox.dataset;
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return;
+  const member = state.members.find(member => member.id === memberId);
+  if (!member) return;
+  const row = monthContributions([member], state.runs, month).rows[0];
+  const item = paymentInstallments(row).find(item => item.itemId === itemId);
+  if (!item || !item.closed || item.amount <= 0) return;
+  const key = installmentKey(memberId, month, itemId);
   if (pendingPayments.has(key)) return;
   const userId = state.user.uid;
-  pendingPayments.set(key, checkbox.checked);
+  const data = {memberId, month, itemId, amount:item.amount, paid:checkbox.checked, updatedBy:userId, updatedAt:serverTimestamp()};
+  pendingPayments.set(key, data);
   $("paymentError").textContent = "";
   render();
   try {
-    await setDoc(doc(db, "payments", key), { memberId, month, paid: checkbox.checked, updatedBy: userId, updatedAt: serverTimestamp() });
+    await setDoc(doc(db, "paymentItems", key), data);
   } catch (error) {
     if (state.user?.uid === userId) $("paymentError").textContent = "Platbu sa nepodarilo uložiť. Skús to znova.";
     console.error(error);
@@ -92,7 +103,8 @@ function render() {
   $("memberSelect").innerHTML = selectableMembers.map((member) => `<option value="${member.id}">${escapeHtml(member.name)}</option>`).join("");
   if (selectableMembers.some((member) => member.id === previousMember)) $("memberSelect").value = previousMember;
   $("memberSelect").disabled = !state.isAdmin || !!editingRunId;
-  $("weeklyTable").innerHTML = rows.length ? `<table><thead><tr><th>Člen</th>${weeks.map((week) => `<th>${week.label}<br><small>min. ${week.requiredRuns} ${week.requiredRuns === 1 ? "beh" : "behy"}</small></th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.member.name)}</td>${row.statuses.map((week) => `<td class="${week.count >= week.requiredRuns ? "ok" : week.closed ? "warning" : "muted"}">${week.count}/${week.requiredRuns}</td>`).join("")}</tr>`).join("")}</tbody></table>` : "<p class=\"muted\">Najprv pridajte členov.</p>";
+  $("weeklyTable").innerHTML = renderWeeklyOverview(rows,weeks,month,{selected:selectedWeeks.get(month),memberPhoto});
+  $("paymentLedgerTable").innerHTML = renderPaymentTable(rows, weeks, month, {records:state.paymentItems, legacyRecords:state.payments, pending:pendingPayments, ready:paymentsAvailable(), isAdmin:state.isAdmin});
   $("monthlyTable").innerHTML = renderRunOverview(rows, month, { renderPayment, editable, opened: openedRunMembers, memberPhoto });
   $("membersList").innerHTML = state.members.map((member) => `<div class="member-row"><span><strong>${escapeHtml(member.name)}</strong><small class="member-nick">@${escapeHtml(member.nick || "bez nicku")}</small></span><button class="button danger delete-member" data-id="${member.id}" aria-label="Odstrániť člena ${escapeHtml(member.name)}">Odstrániť</button></div>`).join("");
 }
@@ -142,6 +154,17 @@ function resetRunForm() {
   $("memberSelect").disabled = !state.isAdmin;
   $("runError").textContent = "";
 }
+
+$("weeklyTable").addEventListener("click", (event) => {
+  const button = event.target.closest(".week-choice");
+  if (!button || button.dataset.weekMonth !== monthValue()) return;
+  const month = monthValue();
+  const week = button.dataset.weekStart;
+  if (!monthWeeks(month).some(item => item.start === week && item.requiredRuns > 0)) return;
+  selectedWeeks.set(month, week);
+  render();
+  $("weeklyTable").querySelector(`[data-week-start="${week}"]`)?.focus();
+});
 
 $("monthlyTable").addEventListener("click", (event) => {
   const button = event.target.closest(".ledger-toggle");
@@ -213,6 +236,19 @@ async function loadData() {
     render();
     console.error(error);
   }));
+  state.unsubscribe.push(onSnapshot(collection(db, "paymentItems"), (snapshot) => {
+    state.paymentItems = new Map(snapshot.docs.map((item) => [item.id, item.data()]));
+    state.paymentItemsReady = true;
+    state.paymentItemsFailed = false;
+    render();
+  }, (error) => {
+    state.paymentItemsReady = false;
+    state.paymentItemsFailed = true;
+    $("paymentError").textContent = "Stav platieb sa nepodarilo načítať.";
+    render();
+    console.error(error);
+  }));
+
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -224,7 +260,11 @@ onAuthStateChanged(auth, async (user) => {
     state.members = [];
     state.runs = [];
     openedRunMembers.clear();
+    selectedWeeks.clear();
     state.payments.clear();
+    state.paymentItems.clear();
+    state.paymentItemsReady = false;
+    state.paymentItemsFailed = false;
     state.paymentsReady = false;
     state.paymentsFailed = false;
     pendingPayments.clear();

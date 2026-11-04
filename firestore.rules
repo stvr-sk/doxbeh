@@ -36,6 +36,26 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
     }
+    match /paymentItems/{id} {
+      allow read: if signedIn();
+      allow create, update: if admin()
+        && request.resource.data.keys().hasAll(['memberId', 'month', 'itemId', 'amount', 'paid', 'updatedBy', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['memberId', 'month', 'itemId', 'amount', 'paid', 'updatedBy', 'updatedAt'])
+        && request.resource.data.memberId is string
+        && request.resource.data.month is string
+        && request.resource.data.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')
+        && request.resource.data.itemId is string
+        && (request.resource.data.itemId == 'base' || request.resource.data.itemId.matches('^' + request.resource.data.month + '-[0-9]{2}$'))
+        && id == request.resource.data.month + '_' + request.resource.data.memberId + '_' + request.resource.data.itemId
+        && exists(/databases/$(database)/documents/members/$(request.resource.data.memberId))
+        && request.resource.data.amount is number
+        && ((request.resource.data.itemId == 'base' && request.resource.data.amount == 10)
+          || (request.resource.data.itemId != 'base' && request.resource.data.amount >= 0 && request.resource.data.amount <= 5))
+        && request.resource.data.paid is bool
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
     match /admins/{id} { allow read: if signedIn() && request.auth.uid == id; }
     match /settings/{id} {
       allow read: if signedIn() && id == "access";

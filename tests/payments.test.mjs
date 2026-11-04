@@ -3,6 +3,8 @@ import vm from "node:vm";
 import assert from "node:assert/strict";
 import { personalInsights, monthContributions, canEditRun, localDate } from "../insights.js";
 import { renderRunOverview } from "../run-overview.js";
+import { installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable } from "../payment-ledger.js";
+import { renderWeeklyOverview } from "../weekly-overview.js";
 import { monthWeeks } from "../weeks.js";
 
 const elements = new Map();
@@ -23,51 +25,33 @@ const context = {
   document: { getElementById: element, addEventListener(type, fn) { (events[type] ??= []).push(fn); } },
   firebaseConfig: {}, initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
   setupDatePickers() {}, onAuthStateChanged() {},
-  personalInsights, monthContributions, canEditRun, localDate, monthWeeks, renderRunOverview,
+  personalInsights, monthContributions, canEditRun, localDate, monthWeeks, renderRunOverview, installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable, renderWeeklyOverview,
   doc: (_, collection, id) => ({ collection, id }), serverTimestamp: () => "server-time",
   async setDoc(ref, data) {
     if (failWrite) throw new Error("offline");
     writes.push({ ref, data });
-    context.test.state.payments.set(ref.id, data);
+    context.test.state.paymentItems.set(ref.id, data);
   }
 };
 vm.createContext(context);
 const source = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8").replace(/^import .*;\r?\n/gm, "");
 vm.runInContext(source + "\nglobalThis.test = {state, renderPayment, pendingPayments};", context);
-const { state, renderPayment, pendingPayments } = context.test;
-const member = { id: "a", name: "A" };
-state.user = { uid: "admin" };
-state.member = member;
-state.members = [member, { id: "b", name: "B" }];
-state.paymentsReady = true;
-assert(renderPayment(member, "2026-10").includes("Nezaplatené"));
-assert(!renderPayment(member, "2026-10").includes('type="checkbox"'));
-const change = async (memberId, month, checked) => {
-  const checkbox = { dataset: { memberId, month }, checked };
-  for (const handler of events.change) await handler({ target: { closest: () => checkbox } });
-};
-await change("a", "2026-10", true);
-assert.equal(writes.length, 0, "Member cannot record payment");
-state.isAdmin = true;
-await change("a", "2026-10", true);
-assert.equal(writes[0].ref.id, "2026-10_a");
-assert.equal(writes[0].data.paid, true);
-assert.equal(writes[0].data.updatedBy, "admin");
-assert(renderPayment(member, "2026-10").includes("Zaplatené"));
-assert(renderPayment(member, "2026-11").includes("Nezaplatené"));
-assert(renderPayment({ id: "b", name: "B" }, "2026-10").includes("Nezaplatené"));
-await change("a", "2026-10", false);
-assert.equal(state.payments.get("2026-10_a").paid, false);
-assert.equal(state.payments.size, 1, "Repeated changes use the same document");
-failWrite = true;
-await change("a", "2026-10", true);
-assert.equal(state.payments.get("2026-10_a").paid, false);
-assert.equal(pendingPayments.size, 0);
-assert(element("paymentError").textContent.includes("nepodarilo"));
-state.paymentsFailed = true;
-assert(renderPayment(member, "2026-10").includes("Stav nedostupný"));
-assert(renderPayment(member, "2026-10").includes("disabled"));
-const previousWrites = writes.length;
-await change("a", "2026-10", true);
-assert.equal(writes.length, previousWrites);
-console.log("PASS: admin-only controls and writes, member visibility, month/member isolation, uncheck, failure rollback and unavailable-state handling. Firebase writes mocked.");
+const {state,renderPayment,pendingPayments}=context.test;
+const member={id:'a',name:'A'};
+state.user={uid:'admin'};state.member=member;state.members=[member,{id:'b',name:'B'}];state.paymentsReady=true;state.paymentItemsReady=true;
+const change=async(memberId,month,itemId,checked)=>{const checkbox={dataset:{memberId,month,itemId},checked};for(const handler of events.change)await handler({target:{closest:()=>checkbox}});};
+assert(renderPayment(member,'2026-10').includes('Nezaplaten'));
+await change('a','2026-10','base',true);assert.equal(writes.length,0);
+state.isAdmin=true;
+await change('a','2026-10','base',true);
+assert.equal(writes[0].ref.collection,'paymentItems');assert.equal(writes[0].ref.id,'2026-10_a_base');assert.equal(writes[0].data.amount,10);assert.equal(writes[0].data.paid,true);assert.equal(writes[0].data.updatedBy,'admin');
+assert(renderPayment(member,'2026-10').includes('Zost'));
+assert(renderPayment(member,'2026-11').includes('Nezaplaten'));
+await change('a','2026-10','base',false);assert.equal(state.paymentItems.get('2026-10_a_base').paid,false);assert.equal(state.paymentItems.size,1);
+failWrite=true;await change('a','2026-10','base',true);assert.equal(state.paymentItems.get('2026-10_a_base').paid,false);assert.equal(pendingPayments.size,0);assert(element('paymentError').textContent.includes('nepodarilo'));
+failWrite=false;const count=writes.length;
+await change('a','2099-11','2099-11-02',true);assert.equal(writes.length,count,'Cannot pay future weekly fine');
+await change('a','2026-10','not-a-week',true);assert.equal(writes.length,count);
+await change('missing','2026-10','base',true);assert.equal(writes.length,count);
+state.paymentItemsFailed=true;assert(renderPayment(member,'2026-10').includes('nedostupn'));await change('a','2026-10','base',true);assert.equal(writes.length,count);
+console.log('PASS: admin-only saves, base amount and document identity, month isolation, uncheck, rollback, closed-week validation, invalid member and unavailable state. Firebase calls mocked.');
