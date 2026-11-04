@@ -1,0 +1,26 @@
+import assert from "node:assert/strict";
+import { personalInsights, monthContributions } from "../insights.js";
+
+const member = { id: "a" };
+const runs = [2, 2.9, 3, "3.0", 4].map((distance) => ({ memberId: "a", date: "2026-11-01", distance }));
+const current = personalInsights(runs, "a", "2026-11", new Date(2026, 10, 3));
+assert.equal(current.goal.completed, 3);
+assert.equal(current.count, 5);
+assert.equal(current.weekly.count, 5);
+assert.equal(current.total, 14.9);
+assert.equal(current.weekly.total, 14.9);
+assert.equal(current.history.at(-1).distance, 14.9);
+const shortRuns = [2, 2.9].map((distance) => ({ memberId: "a", date: "2026-11-01", distance }));
+let result = monthContributions([member], shortRuns, "2026-11", new Date(2026, 10, 9));
+assert.equal(result.rows[0].statuses[0].count, 0);
+assert.equal(result.rows[0].statuses[0].missingRuns, 2);
+assert.equal(result.penalties, 5);
+assert.equal(result.pool, 15);
+assert.equal(result.rows[0].runs.length, 2);
+result = monthContributions([member], [...shortRuns, { memberId: "a", date: "2026-11-04", distance: 3 }], "2026-11", new Date(2026, 10, 9));
+assert.equal(result.rows[0].statuses[0].count, 1);
+assert.equal(result.penalties, 2.5);
+result = monthContributions([member], runs, "2026-11", new Date(2026, 10, 9));
+assert.equal(result.rows[0].statuses[0].count, 3);
+assert.equal(result.penalties, 0);
+console.log("PASS: 3 km inclusive threshold, numeric/string distance, short runs retained in totals/history, no combining short runs, weekly goal, penalties and November Sunday.");

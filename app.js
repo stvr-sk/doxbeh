@@ -4,9 +4,11 @@ import { addDoc, updateDoc, setDoc, collection, deleteDoc, doc, getDoc, getDocs,
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { setupDatePickers } from "./date-picker.js?v=4";
-import { personalInsights, monthContributions, canEditRun, localDate } from "./insights.js?v=7";
+import { personalInsights, monthContributions, canEditRun, localDate } from "./insights.js?v=8";
 
 import { monthWeeks } from "./weeks.js";
+
+import { renderRunOverview } from "./run-overview.js?v=3";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -21,6 +23,7 @@ const isAdminLogin = /\/admin(?:\/index\.html)?\/?$/.test(location.pathname);
 $("memberLoginPanel").classList.toggle("hidden", isAdminLogin);
 $("adminLoginPanel").classList.toggle("hidden", !isAdminLogin);
 if (isAdminLogin) document.title = "Admin · Doxbeh";
+const openedRunMembers = new Set();
 let editingRunId = null;
 let savingRun = false;
 const km = (value) => Number(value).toLocaleString("sk", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -90,7 +93,7 @@ function render() {
   if (selectableMembers.some((member) => member.id === previousMember)) $("memberSelect").value = previousMember;
   $("memberSelect").disabled = !state.isAdmin || !!editingRunId;
   $("weeklyTable").innerHTML = rows.length ? `<table><thead><tr><th>Člen</th>${weeks.map((week) => `<th>${week.label}<br><small>min. ${week.requiredRuns} ${week.requiredRuns === 1 ? "beh" : "behy"}</small></th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.member.name)}</td>${row.statuses.map((week) => `<td class="${week.count >= week.requiredRuns ? "ok" : week.closed ? "warning" : "muted"}">${week.count}/${week.requiredRuns}</td>`).join("")}</tr>`).join("")}</tbody></table>` : "<p class=\"muted\">Najprv pridajte členov.</p>";
-  $("monthlyTable").innerHTML = rows.length ? `<div class="member-summary-grid">${rows.map((row) => `<article class="member-summary"><div class="member-summary-head"><div><strong>${escapeHtml(row.member.name)}</strong><span class="member-nick">${row.runs.length} ${row.runs.length === 1 ? "beh" : "behov"} · ${row.runs.reduce((sum, run) => sum + Number(run.distance || 0), 0).toFixed(1)} km</span></div><strong class="member-total" title="Pr&#237;spevok vr&#225;tane pok&#250;t za ukon&#269;en&#233; t&#253;&#382;dne">${money(row.total)}</strong></div><div class="member-metrics"><span><small>Príplatok</small><b>${money(row.extra)}</b></span><span><small>Základ</small><b>10,00 €</b></span></div>${renderPayment(row.member, month)}<div class="run-list">${row.runs.length ? row.runs.sort((a, b) => b.date.localeCompare(a.date)).map((run) => `<div class="run-item"><span>${run.date}</span><b>${run.distance || "—"} km</b><span class="run-actions">${editable(run) ? `<button type="button" class="button secondary edit-run" data-id="${escapeHtml(run.id)}" aria-label="Upravi&#357; beh z ${run.date}">Upravi&#357;</button>` : ""}${editable(run) ? `<button type="button" class="button danger delete-run" data-id="${escapeHtml(run.id)}" title="Zmazať beh" aria-label="Zmazať beh z ${run.date}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>` : ""}</span></div>`).join("") : "<span class=\"muted\">V tomto mesiaci zatiaľ nemá žiadny beh.</span>"}</div></article>`).join("")}</div>` : "<p class=\"muted\">Žiadne záznamy.</p>";
+  $("monthlyTable").innerHTML = renderRunOverview(rows, month, { renderPayment, editable, opened: openedRunMembers, memberPhoto });
   $("membersList").innerHTML = state.members.map((member) => `<div class="member-row"><span><strong>${escapeHtml(member.name)}</strong><small class="member-nick">@${escapeHtml(member.nick || "bez nicku")}</small></span><button class="button danger delete-member" data-id="${member.id}" aria-label="Odstrániť člena ${escapeHtml(member.name)}">Odstrániť</button></div>`).join("");
 }
 
@@ -116,7 +119,7 @@ function renderPersonalOverview(month) {
   const goalLabel = required ? `${completed} z ${required} behov` : "Bez povinného behu";
   const metrics = (values) => [["Kilometre", `${km(values.total)} km`], ["Počet behov", values.count], ["Priemerný beh", `${km(values.average)} km`], ["Najdlhší beh", `${km(values.longest)} km`]].map(([label, value]) => `<div class="personal-stat"><span class="muted">${label}</span><strong>${value}</strong></div>`).join("");
   $("summaryGrid").innerHTML = metrics(stats);
-  $("weeklyOverview").innerHTML = `<div class="week-goal"><span class="muted">Aktuálny týždeň <small>· ${stats.goal.start.split("-").reverse().join(".")} – ${stats.goal.end.split("-").reverse().join(".")}</small></span><strong>${goalLabel}${required && completed >= required ? ' <span class="ok">✓</span>' : ""}</strong><progress max="1" value="${progress}" aria-label="Týždenný cieľ: ${goalLabel}"></progress></div>${metrics(stats.weekly)}`;
+  $("weeklyOverview").innerHTML = `<div class="week-goal" title="Do cie&#318;a sa po&#269;&#237;taj&#250; iba behy od 3,0 km."><span class="muted">Aktuálny týždeň <small>· ${stats.goal.start.split("-").reverse().join(".")} – ${stats.goal.end.split("-").reverse().join(".")}</small></span><strong>${goalLabel}${required && completed >= required ? ' <span class="ok">✓</span>' : ""}</strong><progress max="1" value="${progress}" aria-label="Týždenný cieľ: ${goalLabel}, behy od 3 km"></progress></div>${metrics(stats.weekly)}`;
   const maximum = Math.max(...stats.history.map((item) => item.distance), 1);
   $("historyChart").innerHTML = stats.history.map((item) => {
     const date = new Date(`${item.month}-01T12:00:00`);
@@ -139,6 +142,18 @@ function resetRunForm() {
   $("memberSelect").disabled = !state.isAdmin;
   $("runError").textContent = "";
 }
+
+$("monthlyTable").addEventListener("click", (event) => {
+  const button = event.target.closest(".ledger-toggle");
+  if (!button) return;
+  const key = `${button.dataset.runMonth}_${button.dataset.runMember}`;
+  if (openedRunMembers.has(key)) openedRunMembers.delete(key);
+  else openedRunMembers.add(key);
+  const open = openedRunMembers.has(key);
+  document.getElementById(button.getAttribute("aria-controls")).hidden = !open;
+  button.setAttribute("aria-expanded", String(open));
+  button.innerHTML = `${open ? 'Skry&#357;' : 'Zobrazi&#357;'} behy <span aria-hidden="true">${open ? '&#8722;' : '+'}</span>`;
+});
 
 $("personalMemberSelect").addEventListener("change", () => renderPersonalOverview(monthValue()));
 for (const period of ["monthly", "weekly"]) {
@@ -208,6 +223,7 @@ onAuthStateChanged(auth, async (user) => {
     state.isAdmin = false;
     state.members = [];
     state.runs = [];
+    openedRunMembers.clear();
     state.payments.clear();
     state.paymentsReady = false;
     state.paymentsFailed = false;

@@ -1,5 +1,6 @@
 import { localDate, monthWeeks } from "./weeks.js";
 export { localDate };
+const countsTowardGoal = (run) => Number(run.distance) >= 3;
 
 export function personalInsights(runs, memberId, month, today = new Date()) {
   const own = runs.filter((run) => run.memberId === memberId);
@@ -9,8 +10,8 @@ export function personalInsights(runs, memberId, month, today = new Date()) {
   const currentMonth = localDate(today).slice(0, 7);
   const week = monthWeeks(currentMonth).find((item) => item.countStart <= localDate(today) && item.end >= localDate(today));
   const required = week.requiredRuns;
-  const completed = own.filter((run) => run.date >= week.countStart && run.date <= week.end && run.date <= localDate(today)).length;
   const weeklyRuns = own.filter((run) => run.date >= week.countStart && run.date <= week.end && run.date <= localDate(today));
+  const completed = weeklyRuns.filter(countsTowardGoal).length;
   const weeklyDistances = weeklyRuns.map((run) => Number(run.distance) || 0);
   const weeklyTotal = weeklyDistances.reduce((sum, distance) => sum + distance, 0);
   const [year, number] = month.split("-").map(Number);
@@ -28,7 +29,7 @@ export function monthContributions(members, allRuns, month, today = new Date()) 
   const rows = members.map((member) => {
     const runs = allRuns.filter((run) => run.memberId === member.id && run.date.startsWith(`${month}-`));
     const statuses = weeks.map((week) => {
-      const count = runs.filter((run) => run.date >= week.countStart && run.date <= week.end).length;
+      const count = runs.filter((run) => run.date >= week.countStart && run.date <= week.end && countsTowardGoal(run)).length;
       const missingRuns = Math.max(week.requiredRuns - count, 0);
       const closed = week.end < date;
       return { ...week, count, missingRuns, closed };

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import assert from "node:assert/strict";
 import { personalInsights, monthContributions, canEditRun, localDate } from "../insights.js";
+import { renderRunOverview } from "../run-overview.js";
 import { monthWeeks } from "../weeks.js";
 
 const elements = new Map();
@@ -22,7 +23,7 @@ const context = {
   document: { getElementById: element, addEventListener(type, fn) { (events[type] ??= []).push(fn); } },
   firebaseConfig: {}, initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
   setupDatePickers() {}, onAuthStateChanged() {},
-  personalInsights, monthContributions, canEditRun, localDate, monthWeeks,
+  personalInsights, monthContributions, canEditRun, localDate, monthWeeks, renderRunOverview,
   doc: (_, collection, id) => ({ collection, id }), serverTimestamp: () => "server-time",
   async setDoc(ref, data) {
     if (failWrite) throw new Error("offline");
