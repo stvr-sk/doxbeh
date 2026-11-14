@@ -4,15 +4,19 @@ import { addDoc, updateDoc, setDoc, collection, deleteDoc, doc, getDoc, getDocs,
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { setupDatePickers } from "./date-picker.js?v=4";
-import { personalInsights, monthContributions, canEditRun, localDate } from "./insights.js?v=8";
+import { personalInsights, monthContributions, canEditRun, localDate } from "./insights.js?v=11";
 
 import { monthWeeks } from "./weeks.js";
 
-import { renderRunOverview } from "./run-overview.js?v=3";
+import { renderRunOverview } from "./run-overview.js?v=6";
 
 import { installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable } from "./payment-ledger.js?v=2";
 
 import { renderWeeklyOverview } from "./weekly-overview.js?v=1";
+
+import { creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate } from "./run-distance.js?v=3";
+
+import { comparisonRows } from "./chart-display.js?v=2";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -34,7 +38,7 @@ const openedRunMembers = new Set();
 const selectedWeeks = new Map();
 let editingRunId = null;
 let savingRun = false;
-const km = (value) => Number(value).toLocaleString("sk", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const km = (value) => Number(value).toLocaleString("sk", { minimumFractionDigits: 1, maximumFractionDigits: 2 });
 const editable = (run) => canEditRun(run, state.user?.uid, state.member?.id, state.isAdmin);
 const monthValue = () => $("monthInput").value;
 const dateInMonth = (date, month) => date.startsWith(`${month}-`);
@@ -87,16 +91,15 @@ document.addEventListener("change", async (event) => {
 function render() {
   const month = monthValue();
   const { rows, weeks } = monthContributions(state.members, state.runs, month);
-  const maxDistance = Math.max(...rows.map((row) => row.runs.reduce((sum, run) => sum + Number(run.distance || 0), 0)), 0);
   renderPersonalOverview(month);
   $("chartMonthLabel").textContent = month;
-  const chartRows = rows.map((row) => ({ ...row, distance: row.runs.reduce((sum, run) => sum + Number(run.distance || 0), 0) }))
-    .sort((a, b) => b.distance - a.distance || a.member.name.localeCompare(b.member.name, "sk"));
+  const chartRows = comparisonRows(rows);
+  const maxDistance = Math.max(...chartRows.map(row => row.distance), 0);
   $("distanceChart").innerHTML = chartRows.length ? chartRows.map((row) => {
     const distance = row.distance;
     const width = maxDistance ? Math.max((distance / maxDistance) * 100, distance ? 3 : 0) : 0;
     const photo = memberPhoto(row.member);
-    return `<div class="chart-row"><span class="chart-name">${escapeHtml(row.member.name)}</span><div class="chart-track"><div class="chart-bar" style="width:${width}%"><span class="chart-avatar"><span>${escapeHtml(initials(row.member.name))}</span>${photo ? `<img src="${photo}" alt="${escapeHtml(row.member.name)}" onerror="this.remove()">` : ""}</span></div></div><strong class="chart-value">${distance.toFixed(1)} km</strong></div>`;
+    return `<div class="chart-row"><span class="chart-name">${escapeHtml(row.member.name)}</span><div class="chart-track"><div class="chart-bar" style="width:${width}%"><span class="chart-avatar"><span>${escapeHtml(initials(row.member.name))}</span>${photo ? `<img src="${photo}" alt="${escapeHtml(row.member.name)}" onerror="this.remove()">` : ""}</span></div></div><strong class="chart-value">${km(distance)} km</strong></div>`;
   }).join("") : "<p class=\"muted\">Najprv pridajte členov.</p>";
   const selectableMembers = state.isAdmin ? state.members : state.members.filter((member) => member.id === state.member?.id);
   const previousMember = $("memberSelect").value;
@@ -153,6 +156,7 @@ function resetRunForm() {
   $("cancelEditButton").classList.add("hidden");
   $("memberSelect").disabled = !state.isAdmin;
   $("runError").textContent = "";
+  updateDistancePreview();
 }
 
 $("weeklyTable").addEventListener("click", (event) => {
@@ -192,6 +196,7 @@ setInterval(() => {
   const today = localDate();
   if (today !== overviewDate) {
     overviewDate = today;
+    updateDistancePreview();
     if (state.user) render();
   }
 }, 60000);
@@ -207,6 +212,8 @@ document.addEventListener("click", (event) => {
   $("runDateInput").value = run.date;
   $("runDateInput").dispatchEvent(new Event("change", { bubbles: true }));
   $("runDistanceInput").value = run.distance;
+  $("runIndoorInput").checked = run.indoor === true;
+  updateDistancePreview();
   $("runFormTitle").textContent = "Upraviť beh";
   $("runEyebrow").textContent = "Úprava záznamu";
   $("saveRunButton").textContent = "Uložiť zmeny";
@@ -332,10 +339,29 @@ $("memberLoginForm").addEventListener("submit", async (event) => {
   }
 });
 
+function runFormValues() {
+  const existing = editingRunId ? state.runs.find(run => run.id === editingRunId) : null;
+  return {date:$("runDateInput").value, distance:Number($("runDistanceInput").value), indoor:$("runIndoorInput").checked, recordedOn:existing ? originalRegistrationDate(existing) : registrationDate(), penaltyVersion:1};
+}
+function updateDistancePreview() {
+  const values=runFormValues();
+  if (!Number.isFinite(values.distance) || values.distance <= 0 || !values.date) {
+    $("runDistancePreview").innerHTML = '<span class="muted">Zadaj vzdialenos&#357; a zobraz&#237; sa po&#269;et zapo&#269;&#237;tan&#253;ch kilometrov.</span>';
+    return;
+  }
+  const value=distanceBreakdown(values);
+  $("runDistancePreview").innerHTML = `<div><span>P&#244;vodn&#225; vzdialenos&#357;</span><b>${km(value.original)} km</b></div>${value.indoorRate?`<div class="distance-penalty"><span>Interi&#233;rov&#253; beh (&minus;10 %)</span><b>&minus;${km(value.indoorLoss)} km</b></div>`:''}${value.lateRate?`<div class="distance-penalty"><span>Neskor&#253; z&#225;pis (&minus;50 % zo zvy&#353;ku)</span><b>&minus;${km(value.lateLoss)} km</b></div>`:''}<div class="distance-final"><span>Zapo&#269;&#237;ta sa</span><strong>${km(value.credited)} km</strong></div><small>${value.original>=3?'&#10003; Sp&#314;&#328;a limit 3 km pod&#318;a p&#244;vodnej vzdialenosti.':'Pod limitom 3 km pre t&#253;&#382;denn&#233; plnenie.'}${value.indoorRate&&value.lateRate?' Najprv &minus;10 % za interi&#233;r, potom &minus;50 % zo zvy&#353;ku.':''}${editingRunId?' Rozhoduje p&#244;vodn&#253; de&#328; z&#225;pisu.':''}</small>`;
+}
+$("runDistanceInput").addEventListener("input",updateDistancePreview);
+$("runIndoorInput").addEventListener("change",updateDistancePreview);
+$("runDateInput").addEventListener("change",updateDistancePreview);
+$("runForm").addEventListener("reset",()=>setTimeout(updateDistancePreview,0));
+
 $("monthInput").value = localDate().slice(0, 7);
 $("runDateInput").value = localDate();
 $("monthInput").addEventListener("change", render);
 setupDatePickers([$("monthInput"), $("runDateInput")]);
+updateDistancePreview();
 $("logoutButton").addEventListener("click", async () => {
   localStorage.removeItem("doxbeh-member-id");
   state.member = null;
@@ -355,6 +381,7 @@ $("runForm").addEventListener("submit", async (event) => {
   const distance = Number($("runDistanceInput").value);
   if (!date || !Number.isFinite(distance) || distance < 0.1 || distance > 500) return;
   const runId = editingRunId;
+  const values = runFormValues();
   savingRun = true;
   $("saveRunButton").disabled = true;
   $("cancelEditButton").disabled = true;
@@ -363,11 +390,11 @@ $("runForm").addEventListener("submit", async (event) => {
     if (runId) {
       const run = state.runs.find((item) => item.id === runId);
       if (!editable(run)) throw new Error("run-not-editable");
-      await updateDoc(doc(db, "runs", runId), { date, distance });
+      await updateDoc(doc(db, "runs", runId), values);
     } else {
       const memberId = state.isAdmin ? $("memberSelect").value : state.member.id;
       if (!memberId) throw new Error("missing-member");
-      await addDoc(collection(db, "runs"), { memberId, date, distance, createdBy: state.user.uid, createdAt: serverTimestamp() });
+      await addDoc(collection(db, "runs"), { memberId, ...values, createdBy: state.user.uid, createdAt: serverTimestamp() });
     }
     resetRunForm();
     render();

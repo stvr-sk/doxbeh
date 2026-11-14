@@ -1,11 +1,17 @@
+import { creditedDistance, distanceBreakdown } from "./run-distance.js?v=3";
 const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
-const km = (value) => Number(value).toLocaleString('sk', {minimumFractionDigits:1,maximumFractionDigits:1});
+const km = (value) => Number(value).toLocaleString('sk', {minimumFractionDigits:1,maximumFractionDigits:2});
 const money = (value) => `${Number(value).toFixed(2).replace('.', ',')} &euro;`;
 const dateLabel = (value) => { const [year, month, day] = value.split('-'); return `${Number(day)}. ${Number(month)}. ${year}`; };
 const runWord = (count) => count === 1 ? 'beh' : count < 5 && count > 1 ? 'behy' : 'behov';
 
+function runDistanceMarkup(run) {
+  const value=distanceBreakdown(run);
+  return `<strong class="run-credited">${km(value.credited)} <small>km</small>${value.rate?`<span class="run-original">p&#244;vodne ${km(value.original)} km</span><span class="run-deduction">${value.indoorRate?'Interi&#233;r &minus;10 %':''}${value.indoorRate&&value.lateRate?' &middot; ':''}${value.lateRate?'Neskor&#253; z&#225;pis &minus;50 %':''}</span>`:''}</strong>`;
+}
+
 export function groupRunRows(rows) {
-  const active = rows.filter((row) => row.runs.length).map((row) => ({...row, distance:row.runs.reduce((sum, run) => sum + Number(run.distance || 0),0)}))
+  const active = rows.filter((row) => row.runs.length).map((row) => ({...row, distance:row.runs.reduce((sum, run) => sum + creditedDistance(run),0)}))
     .sort((a,b) => b.distance-a.distance || a.member.name.localeCompare(b.member.name,'sk'));
   const inactive = rows.filter((row) => !row.runs.length).sort((a,b) => a.member.name.localeCompare(b.member.name,'sk'));
   return {active,inactive};
@@ -32,7 +38,7 @@ export function renderRunOverview(rows, month, {renderPayment, editable, opened 
         <div class="ledger-payment">${renderPayment(member,month)}</div>
         ${hasRuns ? `<button type="button" class="ledger-toggle" data-run-member="${escape(member.id)}" data-run-month="${month}" aria-controls="${detailId}" aria-expanded="${open}">${open ? 'Skry&#357;' : 'Zobrazi&#357;'} behy <span aria-hidden="true">${open ? '&#8722;' : '+'}</span></button>` : '<span class="ledger-waiting">Zatia&#318; bez behu</span>'}
       </div>
-      ${hasRuns ? `<div id="${detailId}" class="ledger-details" ${open ? '' : 'hidden'}><div class="ledger-detail-heading"><strong>Behy v mesiaci</strong><span>Limit pre t&#253;&#382;denn&#253; cie&#318; je 3,0 km.</span></div><div class="ledger-run-list run-list">${runs.map((run) => `<div class="ledger-run"><time datetime="${escape(run.date)}">${dateLabel(run.date)}</time><strong>${km(run.distance || 0)} <small>km</small></strong><span class="ledger-run-status ${Number(run.distance) >= 3 ? 'eligible' : 'short'}">${Number(run.distance) >= 3 ? '&#10003; Sp&#314;&#328;a limit' : 'Pod limitom'}</span><span class="run-actions">${editable(run) ? `<button type="button" class="button secondary edit-run" data-id="${escape(run.id)}" aria-label="Upravi&#357; beh z ${escape(run.date)}">Upravi&#357;</button><button type="button" class="button danger delete-run" data-id="${escape(run.id)}" aria-label="Zmaza&#357; beh z ${escape(run.date)}" title="Zmaza&#357; beh"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>` : ''}</span></div>`).join('')}</div></div>` : ''}
+      ${hasRuns ? `<div id="${detailId}" class="ledger-details" ${open ? '' : 'hidden'}><div class="ledger-detail-heading"><strong>Behy v mesiaci</strong><span>Limit pre t&#253;&#382;denn&#253; cie&#318; je 3,0 km.</span></div><div class="ledger-run-list run-list">${runs.map((run) => `<div class="ledger-run"><time datetime="${escape(run.date)}">${dateLabel(run.date)}</time>${runDistanceMarkup(run)}<span class="ledger-run-status ${Number(run.distance) >= 3 ? 'eligible' : 'short'}">${Number(run.distance) >= 3 ? '&#10003; Sp&#314;&#328;a limit' : 'Pod limitom'}</span><span class="run-actions">${editable(run) ? `<button type="button" class="button secondary edit-run" data-id="${escape(run.id)}" aria-label="Upravi&#357; beh z ${escape(run.date)}">Upravi&#357;</button><button type="button" class="button danger delete-run" data-id="${escape(run.id)}" aria-label="Zmaza&#357; beh z ${escape(run.date)}" title="Zmaza&#357; beh"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>` : ''}</span></div>`).join('')}</div></div>` : ''}
     </article>`;
   };
   return `<div class="ledger-intro"><span><b>${active.length}</b> z ${rows.length} &#269;lenov u&#382; behali</span><span class="ledger-intro-note">${month} &middot; zoraden&#233; pod&#318;a kilometrov</span></div>

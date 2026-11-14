@@ -1,3 +1,5 @@
+import { comparisonRows } from "../chart-display.js";
+import { creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate } from "../run-distance.js";
 import fs from "node:fs";
 import vm from "node:vm";
 import assert from "node:assert/strict";
@@ -25,6 +27,8 @@ const context = {
   document: { getElementById: element, addEventListener(type, fn) { (events[type] ??= []).push(fn); } },
   firebaseConfig: {}, initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
   setupDatePickers() {}, onAuthStateChanged() {},
+  creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate,
+  comparisonRows,
   personalInsights, monthContributions, canEditRun, localDate, monthWeeks, renderRunOverview, installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable, renderWeeklyOverview,
   doc: (_, collection, id) => ({ collection, id }), serverTimestamp: () => "server-time",
   async setDoc(ref, data) {

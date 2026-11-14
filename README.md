@@ -48,3 +48,9 @@ Pre november 2026 platí výnimka: beh z nedele **1. 11.** sa započíta do prv�
 HTML · CSS · JavaScript · Firebase Authentication · Cloud Firestore
 
 Aplikácia funguje bez zostavovania a je pripravená na hostovanie cez GitHub Pages.
+
+## Započítané kilometre
+
+Pri novom zázname sa uchováva pôvodná vzdialenosť a deň zápisu v časovom pásme Europe/Bratislava. Interiérový beh má zrážku 10 %; zápis po dni behu zrážku 50 %. Zrážky sa uplatňujú postupne: najprv 10 % za interiér a následne 50 % zo zostávajúcej vzdialenosti za oneskorený zápis, výsledok sa zaokrúhli na dve desatinné miesta. Formulár zobrazí rozpis ešte pred uložením.
+
+Graf, poradie členov a kilometrové štatistiky používajú vzdialenosť po zrážkach. Týždenný limit 3 km a peňažné pokuty sa vždy vyhodnocujú z pôvodnej dĺžky behu. Pri úprave sa zachováva pôvodný deň zápisu; staršie záznamy bez novej evidencie sa samotným načítaním spätne nepenalizujú.

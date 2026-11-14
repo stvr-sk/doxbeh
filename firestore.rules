@@ -12,12 +12,17 @@ service cloud.firestore {
       allow update: if admin() || (
         signedIn()
         && resource.data.createdBy == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['date', 'distance'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['date', 'distance', 'indoor', 'recordedOn', 'penaltyVersion'])
         && request.resource.data.date is string
         && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.distance is number
         && request.resource.data.distance >= 0.1
         && request.resource.data.distance <= 500
+        && request.resource.data.indoor is bool
+        && request.resource.data.penaltyVersion == 1
+        && request.resource.data.recordedOn is string
+        && request.resource.data.recordedOn.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && (!('recordedOn' in resource.data) || request.resource.data.recordedOn == resource.data.recordedOn)
       );
       allow delete: if admin() || (signedIn() && resource.data.createdBy == request.auth.uid);
     }

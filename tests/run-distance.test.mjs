@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {distanceBreakdown,creditedDistance,originalRegistrationDate,registrationDate} from '../run-distance.js';
+import {personalInsights,monthContributions} from '../insights.js';
+import {weeklyGroups} from '../weekly-overview.js';
+import {groupRunRows,renderRunOverview} from '../run-overview.js';
+const base={memberId:'a',date:'2026-11-12',distance:5,recordedOn:'2026-11-12',penaltyVersion:1};
+assert.equal(creditedDistance(base),5);
+assert.equal(creditedDistance({...base,indoor:true}),4.5);
+assert.equal(creditedDistance({...base,recordedOn:'2026-11-14'}),2.5);
+assert.equal(creditedDistance({...base,recordedOn:'2026-11-14',indoor:true}),2.25);
+assert.equal(creditedDistance({...base,distance:3.2,indoor:true}),2.88);
+assert.equal(creditedDistance({distance:5,date:'2026-10-01',createdAt:{toDate:()=>new Date('2026-11-13T12:00:00Z')}}),5,'Legacy runs are not automatically penalized');
+assert.equal(originalRegistrationDate({...base,createdAt:{toDate:()=>new Date('2026-11-13T12:00:00Z')}}),'2026-11-12');
+assert.equal(originalRegistrationDate({date:'2026-10-01'}),'2026-10-01');
+assert.equal(registrationDate(new Date('2026-11-12T23:30:00Z')),'2026-11-13','Bratislava date in winter');
+assert.equal(registrationDate(new Date('2026-07-12T22:30:00Z')),'2026-07-13','Bratislava date in summer');
+const late={...base,recordedOn:'2026-11-14'};
+const stats=personalInsights([late],'a','2026-11',new Date(2026,10,13));
+assert.equal(stats.goal.completed,1);assert.equal(stats.total,2.5);assert.equal(stats.weekly.total,2.5);assert.equal(stats.history.at(-1).distance,2.5);
+const result=monthContributions([{id:'a',name:'A'}],[late],'2026-11',new Date(2026,10,16));
+const status=result.rows[0].statuses.find(w=>w.start==='2026-11-09');assert.equal(status.count,1);assert.equal(status.missingRuns,1);
+assert.equal(weeklyGroups(result.rows,result.weeks[1],'2026-11-13').partial[0].count,1);
+assert.equal(groupRunRows(result.rows).active[0].distance,2.5);
+const html=renderRunOverview(result.rows,'2026-11',{editable:()=>false,renderPayment:()=>'',opened:new Set(['2026-11_a'])});
+assert(html.includes('2,5'));assert(html.includes('p&#244;vodne 5,0 km'));assert(html.includes('Neskor&#253; z&#225;pis &minus;50 %'));assert(html.includes('Sp&#314;&#328;a limit'));
+assert.equal(distanceBreakdown({...base,indoor:true,recordedOn:'2026-11-14'}).loss,2.75);
+console.log('PASS: indoor/late/combined deductions, rounding, legacy compatibility, original registration day, Bratislava DST, credited totals/history/rank, original-distance weekly qualification and visible deductions.');
+
+assert.equal(distanceBreakdown({...base,indoor:true,recordedOn:"2026-11-14"}).lateLoss,2.25);
+
+assert.equal(creditedDistance({...base,recordedOn:'2026-11-13'}),5,'Late entries before rollout are exempt forever');
+assert.equal(creditedDistance({...base,recordedOn:'2026-11-13',indoor:true}),4.5,'Indoor deduction still applies before rollout');
+assert.equal(creditedDistance({...base,date:'2026-11-14',recordedOn:'2026-11-14'}),5,'Same-day entry after rollout is exempt');
+assert.equal(creditedDistance({...base,date:'2026-11-13',recordedOn:'2026-11-14'}),2.5,'Earlier run entered on rollout day gets late deduction');
