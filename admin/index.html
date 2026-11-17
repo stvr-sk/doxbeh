@@ -7,15 +7,18 @@
     <meta name="theme-color" content="#141916" />
     <title>Doxbeh</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=15" />
+    <link rel="stylesheet" href="./styles.css?v=20" />
   </head>
   <body>
     <main class="shell">
       <header class="topbar">
         <a class="brand" href="./" aria-label="Doxbeh – domov"><span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="runner-logo icon icon-tabler icons-tabler-outline icon-tabler-run-sprint" aria-hidden="true" focusable="false"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.007 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M7 17l5 1l.75 -1.5" /><path d="M18 21v-4l-4 -3l1 -6" /><path d="M10 12v-3l5 -1l3 3l3 1" /><path d="M10 5h-4" /><path d="M6 10h-4" /></svg></span><span class="brand-name">doxbeh<span class="brand-dot">.</span></span></a>
+        <nav class="header-actions" aria-label="Hlavn&#225; navig&#225;cia"><a class="header-link" data-app-route="overview" href="./">Preh&#318;ad</a><a class="header-link" data-app-route="rules" href="./pravidla/">Pravidl&#225;</a>
         <button id="logoutButton" class="button secondary hidden">Odhlásiť ↗</button>
+        </nav>
       </header>
 
+      <div id="applicationViews">
       <section id="loadingView" class="card status-card">Načítavam aplikáciu…</section>
 
       <section id="loginView" class="auth-card hidden">
@@ -84,6 +87,7 @@
           </div>
           <div id="distanceChart" class="distance-chart"></div>
           <p class="muted" style="font-size:10px;margin-top:18px">Graf zobrazuje kilometre po zr&#225;&#382;kach za interi&#233;r a neskor&#253; z&#225;pis.</p>
+          <section id="monthlyPrizes" class="monthly-prizes" aria-label="Mesa&#269;n&#233; v&#253;hry" aria-live="polite"></section>
         </section>
 
         </div>
@@ -128,7 +132,9 @@
           </section>
         </div>
       </section>
-      <footer class="site-footer"><span>doxbeh.</span></footer>
+      </div>
+      <section id="rulesView" hidden aria-label="Pravidl&#225;"></section>
+      <footer class="site-footer"><span>doxbeh.</span><a href="./pravidla/">Pravidl&#225;</a></footer>
     </main>
     <dialog id="confirmDialog" class="confirm-dialog">
       <form method="dialog">
@@ -140,7 +146,7 @@
         </div>
       </form>
     </dialog>
-    <script type="module" src="./app.js?v=24"></script>
+    <script type="module" src="./app.js?v=28"></script>
   </body>
 </html>
 

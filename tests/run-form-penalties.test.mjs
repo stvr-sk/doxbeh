@@ -1,3 +1,4 @@
+import { renderPrizes } from "../prizes.js";
 import { comparisonRows } from "../chart-display.js";
 import { creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate } from "../run-distance.js";
 import fs from "node:fs";
@@ -26,9 +27,9 @@ const context = {
   location: { pathname: "/" }, setTimeout() {}, setInterval() {},
   document: { getElementById: element, addEventListener(type, fn) { (events[type] ??= []).push(fn); } },
   firebaseConfig: {}, initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
-  setupDatePickers() {}, onAuthStateChanged() {},
+  setupDatePickers() {}, setupNavigation:()=>({showOverview(){}}), onAuthStateChanged() {},
   creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate,
-  comparisonRows,
+  comparisonRows, renderPrizes,
   personalInsights, monthContributions, canEditRun, localDate, monthWeeks, renderRunOverview, installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable, renderWeeklyOverview,
   doc: (_, collection, id) => ({ collection, id }), serverTimestamp: () => "server-time",
   async addDoc(ref,data) {writes.push({type:"create",data});},

@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const source=fs.readFileSync(new URL('../navigation.js',import.meta.url),'utf8').replace('export function','function');
+function fixture(initial,{admin=false,directRules=false}={}) {
+ const callbacks={};let fetched=0;let reloads=0;let baseElement;
+ const rootURL='https://example.github.io/doxbeh/';
+ const application={hidden:directRules,formValue:'unfinished 7.5'};
+ const rules={hidden:!directRules,children:directRules?[{}]:[],replaceChildren(...nodes){this.children=nodes;}};
+ const link=route=>({href:rootURL+(route==='rules'?'pravidla/':''),dataset:{appRoute:route},target:'',attrs:{},classList:{toggle(){}},setAttribute(k,v){this.attrs[k]=v},removeAttribute(k){delete this.attrs[k]},hasAttribute(){return false},closest(){return this}});
+ const links=[link('overview'),link('rules')];
+ const location={href:initial,assign(){reloads++},reload(){reloads++}};
+ const stack=[initial];let index=0;
+ const history={scrollRestoration:'auto',pushState(_,__,url){stack.splice(++index);stack.push(url);location.href=url;},replaceState(_,__,url){stack[index]=url;location.href=url;}};
+ const win={scrollY:440,scrollTo({top}){this.scrollY=top},addEventListener(type,fn){callbacks[type]=fn}};
+ const doc={title:'Doxbeh',baseURI:directRules||admin?rootURL:initial,head:{prepend(base){baseElement=base}},createElement:()=>({href:''}),querySelector:()=>baseElement,querySelectorAll:()=>links,getElementById:id=>id==='applicationViews'?application:id==='rulesView'?rules:null,addEventListener(type,fn){callbacks[type]=fn},importNode:node=>node};
+ const ctx={URL,document:doc,window:win,location,history,requestAnimationFrame:fn=>fn(),fetch:async()=>{fetched++;return {ok:true,text:async()=>'<rules/>'}},DOMParser:class{parseFromString(){return {getElementById:()=>({childNodes:[{}]})}}}};
+ vm.createContext(ctx);vm.runInContext(source+'\nglobalThis.api=setupNavigation({isAdminLogin:'+admin+'});',ctx);
+ const click=async target=>{callbacks.click({target,button:0,preventDefault(){},defaultPrevented:false});await new Promise(setImmediate);};
+ return {application,rules,doc,links,win,location,history,api:ctx.api,click,get fetched(){return fetched},get reloads(){return reloads},get base(){return baseElement},async back(){location.href=stack[--index];callbacks.popstate();await new Promise(setImmediate)}};
+}
+let f=fixture('https://example.github.io/doxbeh/');
+await new Promise(setImmediate);
+assert.equal(f.fetched,1);
+assert.equal(f.base.href,'https://example.github.io/doxbeh/');
+await f.click(f.links[1]);assert(f.application.hidden);assert(!f.rules.hidden);assert(f.doc.title.includes('Pravidlá'));assert.equal(f.location.href,'https://example.github.io/doxbeh/pravidla/');
+f.win.scrollY=80;
+await f.click(f.links[0]);assert(!f.application.hidden);assert(f.rules.hidden);assert.equal(f.application.formValue,'unfinished 7.5');assert.equal(f.win.scrollY,440);assert.equal(f.fetched,1);assert.equal(f.reloads,0);
+await f.back();assert(f.application.hidden);assert(!f.rules.hidden);
+await f.api.showOverview();assert(!f.application.hidden);assert(f.rules.hidden);
+f=fixture('https://example.github.io/doxbeh/admin/',{admin:true});await new Promise(setImmediate);await f.click(f.links[1]);await f.click(f.links[0]);assert.equal(f.location.href,'https://example.github.io/doxbeh/admin/');
+f=fixture('https://example.github.io/doxbeh/pravidla/',{directRules:true});assert(f.application.hidden);assert(!f.rules.hidden);assert.equal(f.fetched,0);await f.click(f.links[0]);assert(!f.application.hidden);assert.equal(f.reloads,0);
+console.log('PASS: soft navigation, one prefetched rules request, no reload, preserved form and scroll, back button, logout navigation, admin path, direct rules entry and stable GitHub Pages asset base.');

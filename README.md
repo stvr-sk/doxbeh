@@ -4,6 +4,8 @@
 
 Jednoduchá webová aplikácia na evidenciu behov, porovnávanie kilometrov a sledovanie týždenných cieľov. Všetko podstatné na jednom mieste — od pridania behu až po mesačný prehľad príspevkov.
 
+Kompletné pravidlá s príkladmi nájdeš na [stránke Pravidlá](./pravidla/).
+
 ## Čo aplikácia ponúka
 
 - **Záznamy behov** — pridanie dátumu a vzdialenosti, úprava záznamu a odstránenie s potvrdením.
@@ -54,3 +56,7 @@ Aplikácia funguje bez zostavovania a je pripravená na hostovanie cez GitHub Pa
 Pri novom zázname sa uchováva pôvodná vzdialenosť a deň zápisu v časovom pásme Europe/Bratislava. Interiérový beh má zrážku 10 %; zápis po dni behu zrážku 50 %. Zrážky sa uplatňujú postupne: najprv 10 % za interiér a následne 50 % zo zostávajúcej vzdialenosti za oneskorený zápis, výsledok sa zaokrúhli na dve desatinné miesta. Formulár zobrazí rozpis ešte pred uložením.
 
 Graf, poradie členov a kilometrové štatistiky používajú vzdialenosť po zrážkach. Týždenný limit 3 km a peňažné pokuty sa vždy vyhodnocujú z pôvodnej dĺžky behu. Pri úprave sa zachováva pôvodný deň zápisu; staršie záznamy bez novej evidencie sa samotným načítaním spätne nepenalizujú.
+
+## Mesačné výhry
+
+Tretie miesto získa 10 €, druhé 20 € a prvé zvyšok mesačného poolu po odpočítaní 30 €. Poradie vychádza zo započítaných kilometrov po zrážkach; priebežný rozpis výhier je pri porovnávacom grafe.

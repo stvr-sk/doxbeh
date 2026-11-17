@@ -18,6 +18,10 @@ import { creditedDistance, distanceBreakdown, originalRegistrationDate, registra
 
 import { comparisonRows } from "./chart-display.js?v=2";
 
+import { renderPrizes } from "./prizes.js?v=3";
+
+import { setupNavigation } from "./navigation.js?v=1";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -33,7 +37,7 @@ const pendingPayments = new Map();
 const isAdminLogin = /\/admin(?:\/index\.html)?\/?$/.test(location.pathname);
 $("memberLoginPanel").classList.toggle("hidden", isAdminLogin);
 $("adminLoginPanel").classList.toggle("hidden", !isAdminLogin);
-if (isAdminLogin) document.title = "Admin · Doxbeh";
+const navigation = setupNavigation({isAdminLogin});
 const openedRunMembers = new Set();
 const selectedWeeks = new Map();
 let editingRunId = null;
@@ -114,6 +118,7 @@ function render() {
 
 function renderPersonalOverview(month) {
   const contribution = monthContributions(state.members, state.runs, month);
+  $("monthlyPrizes").innerHTML = renderPrizes(contribution.pool, comparisonRows(contribution.rows));
   $("monthlyPool").innerHTML = `<span class="eyebrow">Spoločný pool · ${escapeHtml(month)}</span><strong>${money(contribution.pool)}</strong><span class="pool-breakdown">Základ ${money(contribution.base)} <span>+ pokuty ${money(contribution.penalties)}</span></span><small>Pokuty iba za ukončené týždne (${contribution.closedWeeks}/${contribution.weeks.length}).</small>`;
   const select = $("personalMemberSelect");
   const previous = select.value;
@@ -368,6 +373,7 @@ $("logoutButton").addEventListener("click", async () => {
   state.isAdmin = false;
   resetRunForm();
   await signOut(auth);
+  await navigation.showOverview();
 });
 $("loginForm").addEventListener("submit", async (event) => {
   event.preventDefault(); $("loginError").textContent = "";

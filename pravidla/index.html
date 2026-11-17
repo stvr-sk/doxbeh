@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <base href="../" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#141916" />
+    <title>Pravidl&#225; &#183; Doxbeh</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./styles.css?v=20" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Doxbeh – domov"><span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="runner-logo icon icon-tabler icons-tabler-outline icon-tabler-run-sprint" aria-hidden="true" focusable="false"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.007 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M7 17l5 1l.75 -1.5" /><path d="M18 21v-4l-4 -3l1 -6" /><path d="M10 12v-3l5 -1l3 3l3 1" /><path d="M10 5h-4" /><path d="M6 10h-4" /></svg></span><span class="brand-name">doxbeh<span class="brand-dot">.</span></span></a>
+        <nav class="header-actions" aria-label="Hlavn&#225; navig&#225;cia"><a class="header-link" data-app-route="overview" href="./">Preh&#318;ad</a><a class="header-link" data-app-route="rules" href="./pravidla/" aria-current="page">Pravidl&#225;</a>
+        <button id="logoutButton" class="button secondary hidden">Odhlásiť ↗</button>
+        </nav>
+      </header>
+
+      <div id="applicationViews" hidden>
+      <section id="loadingView" class="card status-card">Načítavam aplikáciu…</section>
+
+      <section id="loginView" class="auth-card hidden">
+        <div class="auth-story">
+          <h1>Stačí len<br><em>začať.</em></h1>
+          <div class="track-art" aria-hidden="true"><svg class="track-illustration" viewBox="0 0 560 400" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-24 280 200)" stroke="#647e65" stroke-width="2"><rect x="40" y="100" width="480" height="200" rx="100"/><rect x="56" y="116" width="448" height="168" rx="84"/><rect x="72" y="132" width="416" height="136" rx="68"/><rect x="88" y="148" width="384" height="104" rx="52"/></g><path d="m306 205 40-60m-25 5 25-5 5 25" stroke="#ef865e" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter"/></svg><span class="track-number">01 &#8212; &#8734;</span></div>
+        </div>
+        <div class="auth-content">
+        <div id="memberLoginPanel">
+          <h2>Vitaj späť.</h2>
+          <p class="muted">Prihlás sa a zaznamenaj svoj beh.</p>
+          <form id="memberLoginForm">
+            <label>Nick<input id="nickInput" placeholder="meno a priezvisko v tvare men.pri" autocomplete="username" required maxlength="30" /></label>
+            <label>PIN<input id="memberPinInput" type="password" inputmode="numeric" autocomplete="current-password" minlength="6" maxlength="6" pattern="[0-9]{6}" placeholder="6 číslic" required /></label>
+            <button class="button primary" type="submit">Poďme na to <span aria-hidden="true">↗</span></button>
+            <p id="memberLoginError" class="error"></p>
+          </form>
+        </div>
+        <div id="adminLoginPanel" class="hidden">
+          <h2>Prihlásenie admina</h2>
+          <p class="muted">Admin používa e-mail a heslo.</p>
+          <form id="loginForm">
+          <label>E-mail<input id="emailInput" type="email" autocomplete="username" required /></label>
+          <label>Heslo<input id="passwordInput" type="password" autocomplete="current-password" required /></label>
+          <button class="button primary" type="submit">Prihlásiť sa</button>
+          <p id="loginError" class="error"></p>
+          </form>
+        </div>
+        </div>
+      </section>
+
+      <section id="appView" class="hidden">
+        <div class="dashboard-intro"><div><h1>Stačí len <em>začať.</em></h1></div><a class="button primary" href="#runForm">+ Zaznamenať beh</a></div>
+        <div class="toolbar">
+          <label>Mesiac<input id="monthInput" type="month" /></label>
+          <span id="userLabel" class="user-badge muted"></span>
+        </div>
+
+        <section class="personal-overview" aria-label="Osobný prehľad">
+          <div class="personal-heading"><div class="overview-tabs" role="group" aria-label="Obdobie prehľadu"><button id="monthlyOverviewButton" type="button" aria-pressed="true" aria-controls="monthlyOverview">Mesačný prehľad</button><button id="weeklyOverviewButton" type="button" aria-pressed="false" aria-controls="weeklyOverview">Týždenný prehľad</button></div><label id="personalMemberLabel" class="hidden">Člen <select id="personalMemberSelect"></select></label></div>
+          <div id="monthlyOverview"><div class="monthly-overview-grid"><div id="summaryGrid" class="personal-strip monthly-stats"></div><div id="monthlyPool" class="monthly-pool" aria-live="polite"></div></div><details class="history-details"><summary>História kilometrov <span class="muted">Posledných 12 mesiacov</span></summary><div id="historyChart" class="history-chart"></div><p id="historyDescription" class="muted"></p></details></div>
+          <div id="weeklyOverview" class="personal-strip" hidden></div>
+        </section>
+
+        <div class="primary-grid">
+          <section id="runCard" class="card">
+            <div class="section-heading">
+              <div><p id="runEyebrow" class="eyebrow">Nový záznam</p><h2 id="runFormTitle">Pridať beh</h2></div><button id="cancelEditButton" type="button" class="button secondary hidden">Zrušiť úpravu</button>
+            </div>
+            <form id="runForm" class="run-form">
+              <label>Člen<select id="memberSelect" required></select></label>
+              <label>Dátum<input id="runDateInput" type="date" required /></label>
+              <label>Dĺžka (km)<input id="runDistanceInput" type="number" min="0.1" max="500" step="0.1" placeholder="napr. 7,5" required /></label>
+              <label class="indoor-option"><input id="runIndoorInput" type="checkbox" /><span>Interi&#233;rov&#253; beh <small>&minus;10 % kilometrov</small></span></label>
+              <div id="runDistancePreview" class="run-distance-preview" aria-live="polite"></div>
+              <button id="saveRunButton" class="button primary" type="submit">Pridať beh</button>
+            </form>
+            <p id="runMessage" class="success" role="status"></p>
+            <p id="runError" class="error" role="alert"></p>
+          </section>
+
+        <section class="card chart-card">
+          <div class="section-heading">
+            <div><p class="eyebrow">Porovnanie výkonu</p><h2>Kilometre za mesiac</h2></div>
+            <span id="chartMonthLabel" class="pill"></span>
+          </div>
+          <div id="distanceChart" class="distance-chart"></div>
+          <p class="muted" style="font-size:10px;margin-top:18px">Graf zobrazuje kilometre po zr&#225;&#382;kach za interi&#233;r a neskor&#253; z&#225;pis.</p>
+          <section id="monthlyPrizes" class="monthly-prizes" aria-label="Mesa&#269;n&#233; v&#253;hry" aria-live="polite"></section>
+        </section>
+
+        </div>
+
+        <div class="layout">
+          <section class="card wide">
+            <div class="section-heading">
+              <div><p class="eyebrow">Záznamy a príspevky</p><h2>Prehľad behov</h2></div>
+              <span class="pill">Základ 10 €</span>
+            </div>
+            <p id="paymentError" class="error" role="alert"></p>
+            <p id="recordsError" class="error" role="alert"></p>
+            <div id="monthlyTable" class="run-overview"></div>
+          </section>
+
+          <details class="card weekly-details">
+            <summary>T&#253;&#382;denn&#233; plnenie</summary>
+            <div class="section-heading">
+              <div><p class="eyebrow">Kontrola pravidiel</p><h2>Ako sa dar&#237; tento t&#253;&#382;de&#328;</h2></div>
+            </div>
+            <div id="weeklyTable" class="weekly-overview"></div>
+          </details>
+
+          <details class="card weekly-details payment-ledger-card">
+            <summary>Evidencia platieb</summary>
+            <div class="section-heading"><div><p class="eyebrow">Pr&#237;spevky po polo&#382;k&#225;ch</p><h2>Z&#225;klad a t&#253;&#382;denn&#233; pokuty</h2></div></div>
+            <p class="payment-ledger-note muted">Z&#225;klad 10 &euro; je splatn&#253; od za&#269;iatku mesiaca. Pokuty sa zobrazia po ukon&#269;en&#237; t&#253;&#382;d&#328;a; 0 &euro; znamen&#225;, &#382;e nie je &#269;o plati&#357;.</p>
+            <div id="paymentLedgerTable" class="table-wrap"></div>
+          </details>
+
+          <section id="membersCard" class="card wide hidden">
+            <div class="section-heading">
+              <div><p class="eyebrow">Administrácia</p><h2>Členovia</h2></div>
+            </div>
+            <form id="memberForm" class="inline-form">
+              <label>Meno člena<input id="memberNameInput" required maxlength="80" /></label>
+              <label>Nick<input id="memberNickInput" required maxlength="30" placeholder="napr. pat.pis" /></label>
+              <button class="button primary" type="submit">Pridať člena</button>
+            </form>
+            <p id="memberError" class="error"></p>
+            <div id="membersList" class="member-list"></div>
+          </section>
+        </div>
+      </section>
+      </div>
+      <section id="rulesView" aria-label="Pravidl&#225;">
+    <section class="rules-hero">
+      <div><p class="eyebrow">Jasné pravidlá. Spoločné tempo.</p><h1>Stačí len <em>vedieť.</em></h1><p>Všetko o zapisovaní behov, týždenných cieľoch a príspevkoch na jednom mieste.</p></div>
+      <a class="button secondary" href="./">← Späť na prehľad</a>
+    </section>
+    <div class="rules-highlights">
+      <div><strong>3,0 km</strong><span>Minimálna pôvodná dĺžka behu do cieľa</span></div>
+      <div><strong>10 €</strong><span>Základný mesačný príspevok</span></div>
+      <div><strong>2,50 €</strong><span>Za každý chýbajúci povinný beh</span></div>
+    </div>
+    <div class="rules-layout">
+      <nav class="rules-navigation" aria-label="Obsah pravidiel">
+        <span class="eyebrow">Obsah</span>
+        <a href="./pravidla/#zapis">Zápis behov</a><a href="./pravidla/#tyzdne">Týždenné ciele</a><a href="./pravidla/#kilometre">Kilometrové zrážky</a><a href="./pravidla/#prispevky">Príspevky a pokuty</a><a href="./pravidla/#platby">Evidencia zaplatenia</a><a href="./pravidla/#vyhry">Mesa&#269;n&#233; v&#253;hry</a>
+      </nav>
+      <article id="pravidla" class="rules-content" aria-label="Pravidlá Doxbehu">
+        <section id="zapis" class="rules-section"><span class="rules-section-number">01</span><div>
+          <h2>Zápis behov</h2><p class="rules-lead">Beh zapisuj v deň, keď si ho odbehol.</p>
+          <p>Zadaj dátum behu a <strong>pôvodnú odbehnutú vzdialenosť</strong>. Pri behu v interiéri označ možnosť „Interiérový beh“. Formulár pred uložením zobrazí zrážky a výsledné započítané kilometre.</p>
+          <p>Pri oneskorení rozhoduje pôvodný deň zápisu v časovom pásme <strong>Europe/Bratislava</strong>. Neskoršia úprava záznamu tento deň neposúva.</p>
+        </div></section>
+        <section id="tyzdne" class="rules-section"><span class="rules-section-number">02</span><div>
+          <h2>Týždenné ciele</h2><p class="rules-lead">Počíta sa každý samostatný beh od 3,0 km.</p>
+          <p>Limit sa posudzuje podľa <strong>pôvodnej vzdialenosti pred kilometrovými zrážkami</strong>. Kratšie behy zostávajú v záznamoch, kilometroch a štatistikách, ale nesplnia povinný beh. Viac krátkych behov sa na splnenie limitu nesčítava.</p>
+          <div class="rules-table-wrap"><table><caption>Povinnosť podľa počtu dní týždňa vo vybranom mesiaci</caption><thead><tr><th scope="col">Dni v mesiaci</th><th scope="col">Povinné behy</th></tr></thead><tbody><tr><td>1–3 dni</td><td>0</td></tr><tr><td>4–6 dní</td><td>1</td></tr><tr><td>7 dní</td><td>2</td></tr></tbody></table></div>
+          <p>Týždeň beží od pondelka do nedele. Na prelome mesiacov sa posudzuje iba jeho časť patriaca do vybraného mesiaca. Beh navyše v jednom týždni nenahrádza cieľ iného týždňa.</p>
+          <aside class="rules-callout"><strong>Aj po zrážke môže byť cieľ splnený.</strong><p>Vonkajší beh 5 km zapísaný neskoro sa do kilometrov započíta ako 2,50 km, ale stále spĺňa limit 3 km pre týždenný cieľ.</p></aside>
+        </div></section>
+        <section id="kilometre" class="rules-section"><span class="rules-section-number">03</span><div>
+          <h2>Kilometrové zrážky</h2><p class="rules-lead">Odbehnuté a započítané kilometre rozlišujeme.</p>
+          <ul class="rules-list">
+            <li><strong>Interiérový beh: −10 %.</strong> Z pôvodnej vzdialenosti sa započíta 90 %.</li>
+            <li><strong>Oneskorený zápis: −50 %.</strong> Platí pri zápisoch od <strong>14. 11. 2026</strong>, ak je dátum behu skorší než pôvodný deň zápisu. Doplnenia zapísané do 13. 11. 2026 vrátane túto zrážku nemajú.</li>
+            <li><strong>Pri oboch dôvodoch postupne.</strong> Najprv −10 % za interiér, potom −50 % zo zostávajúcej vzdialenosti. Započíta sa 45 % pôvodných kilometrov.</li>
+          </ul>
+          <div class="rules-table-wrap"><table><caption>Príklad pri pôvodne odbehnutých 5 km</caption><thead><tr><th scope="col">Beh a zápis</th><th scope="col">Započítané km</th></tr></thead><tbody><tr><td>Vonku, zapísané v deň behu</td><td>5,00 km</td></tr><tr><td>Interiér, zapísané v deň behu</td><td>4,50 km</td></tr><tr><td>Vonku, zapísané neskoro</td><td>2,50 km</td></tr><tr><td>Interiér, zapísané neskoro</td><td>2,25 km</td></tr></tbody></table></div>
+          <p>Výsledok behu sa zaokrúhľuje na dve desatinné miesta. Porovnávací graf, poradie členov, osobné kilometrové štatistiky a história používajú kilometre <strong>po zrážkach</strong>. Týždenný cieľ a peňažná pokuta používajú pôvodnú dĺžku.</p>
+          <p>Pri behu vidíš pôvodné kilometre aj dôvody zrážok. Staršie záznamy sa samotným načítaním automaticky spätne nepenalizujú.</p>
+        </div></section>
+        <section id="prispevky" class="rules-section"><span class="rules-section-number">04</span><div>
+          <h2>Príspevky a peňažné pokuty</h2><p class="rules-lead">Základ je 10 €. Pokuta vzniká až po skončení týždňa.</p>
+          <p>Každý člen má základný mesačný príspevok <strong>10 €</strong>. Za každý chýbajúci povinný beh sa pripočíta <strong>2,50 €</strong>. Pri cieli dvoch behov je teda pokuta za jeden chýbajúci beh 2,50 €, za oba 5 €.</p>
+          <p>Rozbehnuté a budúce týždne príspevok ešte nezvyšujú. Pokuta sa započíta po ukončení týždňa; pri poslednom čiastočnom týždni po skončení mesiaca. Týždeň bez povinného behu nemá pokutu.</p>
+          <p>Dodatočné pridanie, úprava či odstránenie behu prepočíta aj výsledok príslušného týždňa.</p>
+          <div class="rules-formula"><span>Spoločný mesačný pool</span><strong>10 € × počet členov + pokuty za ukončené týždne</strong></div>
+          <p>Pool je celková suma príspevkov, nie iba už prijaté platby. Označenie príspevku ako zaplateného jeho výšku nemení.</p>
+        </div></section>
+        <section id="platby" class="rules-section"><span class="rules-section-number">05</span><div>
+          <h2>Evidencia zaplatenia</h2><p class="rules-lead">Každá položka má vlastný stav platby.</p>
+          <p>Samostatne sa eviduje <strong>základ 10 €</strong> a pokuta za každý ukončený týždeň. Zaplatenie označuje alebo ruší <strong>iba admin</strong>. Používatelia vidia rozpis aj zostávajúcu sumu.</p>
+          <ul class="rules-list"><li><strong>Pomlčka:</strong> týždeň ešte nie je ukončený.</li><li><strong>0 € a „Bez pokuty“:</strong> za tento týždeň nie je čo platiť.</li><li><strong>„Zostáva“:</strong> súčet aktuálne splatných, ešte neuhradených položiek.</li><li><strong>Zelené „Zaplatené“:</strong> všetky doteraz splatné položky sú uhradené. Ďalší ukončený týždeň môže priniesť novú pokutu.</li></ul>
+          <p>Ak po oprave behu narastie už zaplatená pokuta, zobrazí sa rozdiel na doplatenie. Platby sa vedú samostatne pre každého člena a mesiac. Staršie označenia celého mesiaca sa zohľadňujú pre položky splatné v čase označenia.</p>
+        </div></section>
+
+        <section id="vyhry" class="rules-section"><span class="rules-section-number">06</span><div>
+          <h2>Mesa&#269;n&#233; v&#253;hry</h2><p class="rules-lead">Tri miesta. Jeden spolo&#269;n&#253; pool.</p>
+          <p>O porad&#237; rozhoduj&#250; <strong>zapo&#269;&#237;tan&#233; kilometre za dan&#253; mesiac</strong>, teda vzdialenos&#357; po kilometrov&#253;ch zr&#225;&#382;kach. Kone&#269;n&#233; poradie sa ur&#269;&#237; po skon&#269;en&#237; mesiaca.</p>
+          <div class="rules-table-wrap"><table><caption>Rozdelenie mesa&#269;n&#233;ho poolu</caption><thead><tr><th scope="col">Umiestnenie</th><th scope="col">V&#253;hra</th></tr></thead><tbody><tr><td>1. miesto</td><td>Zvy&#353;ok poolu po odpo&#269;&#237;tan&#237; 30 &euro;</td></tr><tr><td>2. miesto</td><td>20 &euro;</td></tr><tr><td>3. miesto</td><td>10 &euro;</td></tr></tbody></table></div>
+          <aside class="rules-callout"><strong>Pr&#237;klad pri poole 100 &euro;</strong><p>Prv&#233; miesto z&#237;ska 70 &euro;, druh&#233; 20 &euro; a tretie 10 &euro;. Ak pool vplyvom pok&#250;t narastie, zvy&#353;uje sa v&#253;hra prv&#233;ho miesta.</p></aside>
+          <p>Sumy zobrazen&#233; po&#269;as mesiaca s&#250; priebe&#382;n&#233; a vych&#225;dzaj&#250; z aktu&#225;lneho poolu.</p>
+        </div></section>
+      </article>
+    </div>
+      </section>
+      <footer class="site-footer"><span>doxbeh.</span><a href="./pravidla/">Pravidl&#225;</a></footer>
+    </main>
+    <dialog id="confirmDialog" class="confirm-dialog">
+      <form method="dialog">
+        <h2 id="confirmTitle">Potvrdiť akciu</h2>
+        <p id="confirmMessage" class="muted"></p>
+        <div class="dialog-actions">
+          <button value="cancel" class="button secondary">Zrušiť</button>
+          <button id="confirmAction" value="confirm" class="button danger">Odstrániť</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="./app.js?v=28"></script>
+  </body>
+</html>
+
