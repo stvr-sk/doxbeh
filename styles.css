@@ -115,3 +115,51 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover{
 
 .prize-names{display:block;font-size:11px;line-height:1.6;color:#c4d3b7;margin-top:9px;overflow-wrap:anywhere}.prize-1 .prize-names{color:#ead4a4}@media(max-width:700px){.prize-names{font-size:10px}}
 #applicationViews[hidden],#rulesView[hidden]{display:none!important}@media(max-width:420px){.topbar .header-actions{gap:9px;flex-wrap:wrap;justify-content:flex-end;max-width:160px}.topbar .header-link{font-size:10px;padding:5px 0}.topbar .button{font-size:9px;padding:6px 8px}}
+/* Keep entry at the side; let the full-width chart have its own row. */
+.primary-grid{grid-template-columns:minmax(300px,.85fr) minmax(0,1.3fr);gap:24px;align-items:start;margin-bottom:24px}
+.primary-grid #runForm{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:end}
+.primary-grid #runForm>label:first-child,.primary-grid #runForm>.indoor-option,.primary-grid #runForm>.run-distance-preview,.primary-grid #saveRunButton{grid-column:1/-1}
+.month-highlights{min-width:0;background:#202b23}
+.month-highlights .monthly-prizes{margin:0;padding:0;border-top:0}
+.month-highlights .prize-heading{margin-bottom:16px}
+.month-highlights .prize-tier{padding:18px 15px}
+.month-highlights .prize-tier>strong{font-size:26px;margin-top:15px}
+.month-highlights .prize-names{font-size:12px;margin-top:12px;line-height:1.6}
+.recent-activity{margin-top:22px;padding-top:19px;border-top:1px solid #3d4b38}
+.recent-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.recent-heading>span:last-child{font-size:9px;color:#8fa183}
+.recent-list{display:grid;gap:0}
+.recent-run{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid #334432}
+.recent-run:first-child{border-top:0}
+.recent-run .ledger-avatar{width:29px;height:29px;font-size:9px;background:#34452e;color:#bed0ac}
+.recent-person{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.recent-person>strong{font-size:12px;font-weight:600;color:#ccdac1;overflow-wrap:anywhere}
+.recent-added{display:flex;flex-direction:column;gap:3px;font-size:10px;color:#879b7b;white-space:nowrap}
+.recent-added>span:first-child{font-size:9px;color:#879b7b}
+.recent-distance{font-size:14px;font-weight:650;white-space:nowrap;color:#dbe8cd;font-variant-numeric:tabular-nums;min-width:65px;text-align:right}
+.recent-distance>small{font-size:10px;color:#91a783;font-weight:400}
+.recent-empty{font-size:12px;color:#9aab8d;line-height:1.8;padding:12px 0}
+#appView>.chart-card{margin-bottom:24px}
+@media(max-width:1000px){.primary-grid{grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:18px}.month-highlights .prize-tier{padding:15px 10px}.month-highlights .prize-tier>strong{font-size:22px}.month-highlights .prize-names{font-size:10px}.month-highlights .prize-place{font-size:9px}.recent-person{align-items:start;flex-direction:column;gap:3px}.recent-person>strong{font-size:11px}}
+@media(max-width:760px){.primary-grid{grid-template-columns:minmax(0,1fr);gap:18px}.month-highlights .prize-tier{padding:15px 12px}.month-highlights .prize-tier>strong{font-size:24px}.month-highlights .prize-names{font-size:11px}.recent-person{align-items:center;flex-direction:row;gap:10px}.recent-person>strong{font-size:12px}}
+@media(max-width:420px){.primary-grid #runForm{grid-template-columns:minmax(0,1fr)}.month-highlights .prize-tier{padding:13px 9px}.month-highlights .prize-tier>strong{font-size:21px}.month-highlights .prize-names{font-size:10px}.recent-person{align-items:start;flex-direction:column;gap:3px}}
+
+/* Keep both cards aligned; only the activity list scrolls. */
+.recent-list{max-height:162px;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:#52664a transparent;scrollbar-gutter:stable}
+.recent-run{height:54px;min-height:54px;padding:8px 0;box-sizing:border-box;flex-shrink:0}
+.recent-list:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+@media(min-width:761px){
+ .primary-grid>.month-highlights{contain:size;align-self:stretch;display:flex;flex-direction:column;min-height:0}
+ .month-highlights>.monthly-prizes{flex-shrink:0}
+ .month-highlights>.recent-activity{display:flex;flex-direction:column;min-height:0;flex:1}
+ .recent-activity>.recent-heading{flex-shrink:0}
+ .recent-activity>.recent-list{min-height:162px;flex:0 0 162px}
+}
+
+@media(min-width:761px){
+ .month-highlights .prize-tier{padding-top:14px;padding-bottom:14px}
+ .month-highlights .prize-tier>strong{margin-top:10px}
+ .month-highlights .prize-names{margin-top:8px}
+ .month-highlights>.recent-activity{margin-top:14px;padding-top:12px}
+ .recent-activity>.recent-heading{margin-bottom:8px}
+}

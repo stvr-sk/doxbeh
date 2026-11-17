@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#141916" />
     <title>Pravidl&#225; &#183; Doxbeh</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=20" />
+    <link rel="stylesheet" href="./styles.css?v=25" />
   </head>
   <body>
     <main class="shell">
@@ -80,6 +80,13 @@
             <p id="runError" class="error" role="alert"></p>
           </section>
 
+          <section class="card month-highlights" aria-label="Priebe&#382;n&#233; poradie a aktivita">
+            <section id="monthlyPrizes" class="monthly-prizes" aria-label="Mesa&#269;n&#233; v&#253;hry" aria-live="polite"></section>
+            <section id="recentActivity" class="recent-activity" aria-label="Najnov&#353;ie behy" aria-live="polite"></section>
+          </section>
+
+        </div>
+
         <section class="card chart-card">
           <div class="section-heading">
             <div><p class="eyebrow">Porovnanie výkonu</p><h2>Kilometre za mesiac</h2></div>
@@ -87,10 +94,7 @@
           </div>
           <div id="distanceChart" class="distance-chart"></div>
           <p class="muted" style="font-size:10px;margin-top:18px">Graf zobrazuje kilometre po zr&#225;&#382;kach za interi&#233;r a neskor&#253; z&#225;pis.</p>
-          <section id="monthlyPrizes" class="monthly-prizes" aria-label="Mesa&#269;n&#233; v&#253;hry" aria-live="polite"></section>
         </section>
-
-        </div>
 
         <div class="layout">
           <section class="card wide">
@@ -209,7 +213,7 @@
         </div>
       </form>
     </dialog>
-    <script type="module" src="./app.js?v=28"></script>
+    <script type="module" src="./app.js?v=34"></script>
   </body>
 </html>
 

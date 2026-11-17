@@ -22,6 +22,8 @@ import { renderPrizes } from "./prizes.js?v=3";
 
 import { setupNavigation } from "./navigation.js?v=1";
 
+import { renderRecentActivity } from "./dashboard-activity.js?v=6";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -119,6 +121,7 @@ function render() {
 function renderPersonalOverview(month) {
   const contribution = monthContributions(state.members, state.runs, month);
   $("monthlyPrizes").innerHTML = renderPrizes(contribution.pool, comparisonRows(contribution.rows));
+  $("recentActivity").innerHTML = renderRecentActivity(contribution.rows,{memberPhoto});
   $("monthlyPool").innerHTML = `<span class="eyebrow">Spoločný pool · ${escapeHtml(month)}</span><strong>${money(contribution.pool)}</strong><span class="pool-breakdown">Základ ${money(contribution.base)} <span>+ pokuty ${money(contribution.penalties)}</span></span><small>Pokuty iba za ukončené týždne (${contribution.closedWeeks}/${contribution.weeks.length}).</small>`;
   const select = $("personalMemberSelect");
   const previous = select.value;
@@ -234,7 +237,7 @@ async function loadData() {
     state.members = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })); render();
   }));
   state.unsubscribe.push(onSnapshot(collection(db, "runs"), (snapshot) => {
-    state.runs = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })); render();
+    state.runs = snapshot.docs.map((item) => ({ id: item.id, ...item.data({ serverTimestamps: "estimate" }) })); render();
   }));
   state.unsubscribe.push(onSnapshot(collection(db, "payments"), (snapshot) => {
     state.payments = new Map(snapshot.docs.map((item) => [item.id, item.data()]));

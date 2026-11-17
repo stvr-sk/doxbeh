@@ -1,3 +1,4 @@
+import { renderRecentActivity } from "../dashboard-activity.js";
 import { renderPrizes } from "../prizes.js";
 import { comparisonRows } from "../chart-display.js";
 import { creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate } from "../run-distance.js";
@@ -29,7 +30,7 @@ const context = {
   firebaseConfig: {}, initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
   setupDatePickers() {}, setupNavigation:()=>({showOverview(){}}), onAuthStateChanged() {},
   creditedDistance, distanceBreakdown, originalRegistrationDate, registrationDate,
-  comparisonRows, renderPrizes,
+  comparisonRows, renderPrizes, renderRecentActivity,
   personalInsights, monthContributions, canEditRun, localDate, monthWeeks, renderRunOverview, installmentKey, paymentInstallments, memberPaymentBalance, renderPaymentTable, renderWeeklyOverview,
   doc: (_, collection, id) => ({ collection, id }), serverTimestamp: () => "server-time",
   async setDoc(ref, data) {
